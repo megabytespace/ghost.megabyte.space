@@ -1,14 +1,40 @@
-<div align="center">
-  <h1>ghost.megabyte.space</h1>
-  <p><strong>Coming soon.</strong></p>
-</div>
+# ghost.megabyte.space
 
-<div align="center">
-  <a href="https://ghost.megabyte.space"><img alt="Homepage" src="https://img.shields.io/website?down_color=%23FF4136&down_message=Down&label=Homepage&logo=home-assistant&logoColor=white&up_color=%232ECC40&up_message=Up&url=https%3A%2F%2Fghost.megabyte.space&style=for-the-badge" /></a>
-  <a href="https://github.com/megabytespace/ghost.megabyte.space/blob/main/LICENSE"><img alt="License: Rutgers" src="https://img.shields.io/badge/License-Rutgers-7C3AED?logo=open-source-initiative&logoColor=white&style=for-the-badge" /></a>
-</div>
+Public Cloudflare-cached EMF API and demo site for one Home Assistant sensor.
 
-<br/>
+## What ships here
+- A public read-only API for the current EMF value, full-range history browsing, entropy summaries, timeline metadata, raw D1 snapshots, exports, and derived random numbers
+- Human-friendly documentation at `/docs`
+- Formal OpenAPI at `/api/v1/openapi.json` and `/api/docs`
+- A live site that displays the current reading, a realtime graph, full history controls, snapshot export tools, and story/timeline context
+
+## Stack
+- Cloudflare Worker
+- Hono + `@hono/zod-openapi`
+- Cloudflare Cache API + KV + optional D1 snapshots
+- Static assets in `public/`
+
+## Key files
+- [PROJECT_BRIEF.md](/Users/apple/emdash-projects/worktrees/puny-chairs-create-9eu/PROJECT_BRIEF.md)
+- [SPEC.md](/Users/apple/emdash-projects/worktrees/puny-chairs-create-9eu/SPEC.md)
+- [DEPLOY.md](/Users/apple/emdash-projects/worktrees/puny-chairs-create-9eu/DEPLOY.md)
+- [wrangler.jsonc](/Users/apple/emdash-projects/worktrees/puny-chairs-create-9eu/wrangler.jsonc)
+- [src/index.ts](/Users/apple/emdash-projects/worktrees/puny-chairs-create-9eu/src/index.ts)
+
+## Local development
+```bash
+pnpm install
+cp .dev.vars.example .dev.vars
+pnpm check
+pnpm dev
+```
+
+## E2E
+The repo includes a Playwright E2E harness under `tests/e2e/` with 14 multi-feature user flows. Local E2E uses a committed mock env file at `.dev.vars.playwright`, runs the Worker in deterministic mock-sensor mode, enables dev-only seed/reset helpers, and writes local state under `.wrangler/state/e2e`.
+
+```bash
+pnpm test:e2e
+```
 
 ## License
 

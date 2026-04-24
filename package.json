@@ -1,0 +1,27 @@
+{
+  "name": "ghost-megabyte-space",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "dev:e2e": "HOME=.wrangler/home XDG_CONFIG_HOME=.wrangler/config wrangler dev --local --port 8787 --test-scheduled --persist-to .wrangler/state/e2e --env-file .dev.vars.playwright",
+    "deploy": "wrangler deploy",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "dependencies": {
+    "@hono/swagger-ui": "^0",
+    "@hono/zod-openapi": "^0",
+    "hono": "^4",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@cloudflare/workers-types": "^4",
+    "typescript": "^5",
+    "wrangler": "^4"
+  }
+}

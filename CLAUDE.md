@@ -3,13 +3,13 @@
 <instructions>
 
 ## Product
-Domain: ghost.megabyte.space. CF Workers + Hono backend. Angular 20 + PrimeNG frontend. D1 database. Clerk auth. Stripe billing.
+Domain: ghost.megabyte.space. One public Home Assistant-backed EMF sensor exposed through a Cloudflare Worker with Hono, static docs/demo pages, KV rate limiting, optional D1 snapshots, and no auth or billing in v1.
 
 ## Stack
-CF Workers+Hono | Angular 20+Ionic+PrimeNG | D1 | KV+Upstash | Drizzle v1+Zod | Clerk | Stripe | Inngest | Resend | Bun | ESLint+Prettier | Playwright v1.56+Vitest | PostHog+Sentry+GA4/GTM
+CF Workers + Hono + @hono/zod-openapi | Static assets in `public/` | Home Assistant upstream | Cloudflare Cache API | KV rate limiting | Optional D1 history snapshots | TypeScript | Wrangler
 
 ## Deploy
-`wrangler deploy` → purge CDN → E2E 6bp → visual QA → done. Rollback: `wrangler rollback`.
+`pnpm check` → `pnpm deploy` after real Cloudflare binding IDs and Home Assistant secrets are supplied. Rollback: `wrangler rollback`.
 
 ## Routing
 Skills: @~/.agentskills/_router.md. Agents: @~/.agentskills/agents/. Rules: @~/.claude/rules/.

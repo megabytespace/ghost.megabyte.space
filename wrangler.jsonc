@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ghost-megabyte-space",
+  "account_id": "84fa0d1b16ff8086dd958c468ce7fd59",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-23",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "EMF_DB",
+      "database_name": "ghost-megabyte-space-emf"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMIT_KV"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "ghost.megabyte.space",
+      "custom_domain": true
+    }
+  ],
+  "triggers": {
+    "crons": ["*/1 * * * *"]
+  },
+  "vars": {
+    "SITE_NAME": "ghost.megabyte.space",
+    "SITE_URL": "https://ghost.megabyte.space",
+    "EMF_SENSOR_NAME": "Ghost EMF",
+    "EMF_SENSOR_ENTITY_ID": "sensor.gq_emf390_emf_mg",
+    "EMF_SENSOR_STARTED_AT": "2026-04-03T02:47:58.394637+00:00",
+    "CURRENT_CACHE_TTL_SECONDS": "3",
+    "HISTORY_CACHE_TTL_SECONDS": "15",
+    "ENTROPY_CACHE_TTL_SECONDS": "15",
+    "PUBLIC_API_RATE_LIMIT_PER_MINUTE": "60"
+  }
+}

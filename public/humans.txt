@@ -1,0 +1,7 @@
+/* TEAM */
+Maintainer: ghost.megabyte.space
+Site: https://ghost.megabyte.space
+
+/* SITE */
+Stack: Cloudflare Workers, Hono, Home Assistant, D1, KV
+Purpose: Public EMF feed and documentation

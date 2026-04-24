@@ -1,0 +1,27 @@
+{
+  "name": "ghost.megabyte.space",
+  "short_name": "Ghost EMF",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05090a",
+  "theme_color": "#0b1713",
+  "description": "Public Cloudflare-cached EMF readings, full-range snapshot exports, and entropy tools for one Home Assistant sensor.",
+  "icons": [
+    {
+      "src": "/logo-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Current Reading",
+      "url": "/api/v1/ghost-emf/current"
+    },
+    {
+      "name": "Developer Docs",
+      "url": "/docs"
+    }
+  ]
+}

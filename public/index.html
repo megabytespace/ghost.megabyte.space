@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ghost.megabyte.space | Public Ghost EMF API</title>
+    <meta
+      name="description"
+      content="Public Cloudflare-cached EMF readings from one Home Assistant sensor, with live graphing, full-history browsing, developer docs, and entropy-ready polling."
+    />
+    <meta property="og:title" content="ghost.megabyte.space | Public Ghost EMF API" />
+    <meta
+      property="og:description"
+      content="Public Cloudflare-cached EMF readings, full-history snapshots, exports, and entropy tools for one Home Assistant sensor."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ghost.megabyte.space/" />
+    <meta property="og:image" content="https://ghost.megabyte.space/logo-mark.svg" />
+    <link rel="canonical" href="https://ghost.megabyte.space/" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "ghost.megabyte.space",
+        "url": "https://ghost.megabyte.space/",
+        "description": "Public Cloudflare-cached EMF readings, full-history snapshots, exports, and entropy tools for one Home Assistant sensor.",
+        "publisher": {
+          "@type": "Organization",
+          "name": "ghost.megabyte.space",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://ghost.megabyte.space/logo-mark.svg"
+          }
+        }
+      }
+    </script>
+  </head>
+  <body data-page="home">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="noise"></div>
+    <header class="site-header">
+      <div class="brand-lockup">
+        <img class="brand-logo" src="/logo-mark.svg" alt="" width="40" height="40" />
+        <div class="brand-mark">GHOST // EMF</div>
+      </div>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Overview</a>
+        <a href="/docs">Docs</a>
+        <a href="/api/docs">OpenAPI</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <p class="eyebrow">One public sensor. One edge cache. One witness instrument.</p>
+          <h1>Ghost EMF, published raw.</h1>
+          <p class="lede">
+            This site exposes the current reading from a single Home Assistant EMF sensor through a public,
+            Cloudflare-cached API so developers can poll it, graph it, and use it for their own experiments,
+            including entropy calculations.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/docs">Read the docs</a>
+            <a class="button button-secondary" href="/api/v1/ghost-emf/current">Fetch current JSON</a>
+          </div>
+          <ul class="signal-list" aria-label="Quick facts">
+            <li>Public GET-only API</li>
+            <li>Cloudflare cache in front of Home Assistant</li>
+            <li>Minute snapshots stored in a serverless D1 database</li>
+            <li>Formal OpenAPI plus human docs</li>
+            <li id="earliest-known-fact">Earliest retained reading loading…</li>
+          </ul>
+        </div>
+
+        <div class="hero-stage" aria-hidden="true">
+          <div class="spirit spirit-child"></div>
+          <div class="spirit spirit-woman"></div>
+          <div class="spirit spirit-dog"></div>
+          <div class="spirit spirit-hand"></div>
+        </div>
+      </section>
+
+      <section class="shell status-grid" aria-label="Live sensor status">
+        <article class="status-card status-primary">
+          <p class="card-label">Current value</p>
+          <p class="metric"><span id="current-value">--</span><span id="current-unit" class="metric-unit"></span></p>
+          <p id="current-state" class="card-note">Waiting for the first sample.</p>
+        </article>
+        <article class="status-card">
+          <p class="card-label">Last updated</p>
+          <p id="last-updated" class="metric metric-small">--</p>
+          <p class="card-note">Normalized from Home Assistant.</p>
+        </article>
+        <article class="status-card">
+          <p class="card-label">Entropy</p>
+          <p id="entropy-value" class="metric metric-small">--</p>
+          <p class="card-note">Shannon entropy over the selected range.</p>
+        </article>
+        <article class="status-card">
+          <p class="card-label">Cache status</p>
+          <p id="cache-status" class="metric metric-small">--</p>
+          <p class="card-note">Short-lived Cloudflare edge caching for safe polling.</p>
+        </article>
+      </section>
+
+      <section class="shell panel chart-panel">
+        <div class="panel-copy">
+          <p class="eyebrow">Realtime demo</p>
+          <h2>Live graph and full-history browser</h2>
+          <p>
+            The chart below refreshes from the public API, reflects the same Home Assistant-backed EMF sensor
+            available to external developers, and can be widened back to the earliest retained reading.
+          </p>
+        </div>
+        <div class="range-controls" aria-label="History range controls">
+          <div class="preset-row" role="group" aria-label="Quick ranges">
+            <button type="button" class="range-button" data-range="24h">24h</button>
+            <button type="button" class="range-button" data-range="7d">7 days</button>
+            <button type="button" class="range-button" data-range="30d">30 days</button>
+            <button type="button" class="range-button" data-range="all">All history</button>
+          </div>
+          <form id="history-range-form" class="range-form">
+            <label class="input-group">
+              <span>Start</span>
+              <input id="history-start" type="datetime-local" />
+            </label>
+            <label class="input-group">
+              <span>End</span>
+              <input id="history-end" type="datetime-local" />
+            </label>
+            <button type="submit" class="button button-secondary">Apply range</button>
+          </form>
+          <div class="hero-actions">
+            <button id="copy-range-link" type="button" class="button button-secondary">Copy Range Link</button>
+          </div>
+          <p id="copy-range-status" class="card-note">The selected chart window can be shared as a direct link.</p>
+        </div>
+        <canvas id="history-chart" width="1200" height="420" aria-label="Recent EMF history chart"></canvas>
+        <p id="chart-meta" class="chart-meta">Loading recent history…</p>
+        <p id="chart-events" class="chart-side-note">Finding major markers in the selected range…</p>
+      </section>
+
+      <section class="shell two-up utility-layout">
+        <article class="panel">
+          <p class="eyebrow">Snapshot export</p>
+          <h2>Take the selected range with you</h2>
+          <p>
+            A Worker cron trigger stores minute-by-minute EMF snapshots in D1. Any selected range can be downloaded as
+            raw JSON, CSV, or an Excel-compatible workbook, and the same range can be imported into Google Sheets.
+          </p>
+          <p>
+            In the fictional story tied to this site, ghosts are actively making the EMF reader go off, and even if
+            the clean usability of the data remains questionable, a large enough EMF-390 dataset could still capture
+            subtle fluctuations from their presence. In that frame, a few affected readings are enough for mathematics
+            to derive a bound random number from the stored snapshot.
+          </p>
+          <div class="hero-actions">
+            <a id="snapshot-json-link" class="button button-secondary" href="/api/v1/ghost-emf/snapshot">Snapshot JSON</a>
+            <a id="export-csv-link" class="button button-secondary" href="/api/v1/ghost-emf/export?format=csv">CSV</a>
+            <a id="export-excel-link" class="button button-secondary" href="/api/v1/ghost-emf/export?format=excel">Excel</a>
+          </div>
+          <pre><code id="sheets-formula">Loading Google Sheets formula…</code></pre>
+          <div class="hero-actions">
+            <button id="copy-sheets-formula" type="button" class="button button-secondary">Copy Sheets Formula</button>
+          </div>
+          <p id="copy-sheets-status" class="card-note">The selected range will map directly into <code>IMPORTDATA()</code>.</p>
+          <p id="snapshot-storage-note" class="card-note">Checking serverless snapshot storage…</p>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Random number</p>
+          <h2>Derived from the selected snapshot</h2>
+          <p>
+            The current range can also produce a reproducible number derived from the stored snapshot rows. Change the
+            range, and the result changes with it.
+          </p>
+          <p id="random-number" class="metric metric-small">--</p>
+          <p id="random-meta" class="card-note">Waiting for the selected snapshot range…</p>
+          <div class="hero-actions">
+            <a id="random-json-link" class="button button-secondary" href="/api/v1/ghost-emf/random">View random JSON</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="shell two-up">
+        <article class="panel">
+          <p class="eyebrow">Plain facts</p>
+          <h2>What this site can actually state</h2>
+          <ul class="signal-list">
+            <li>One Home Assistant EMF sensor is exposed through a public Cloudflare-cached API.</li>
+            <li>The feed can be polled, graphed, replayed across historical ranges, exported, and summarized with entropy.</li>
+            <li>The timeline combines technical markers with fictional story milestones drawn from the supplied prompts.</li>
+            <li>The narrative layer is kept to the stated story facts rather than extra invented framing.</li>
+            <li>The site still separates measurable data from story material so developers can inspect the feed directly.</li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Fictional frame</p>
+          <h2>The story paired with the measurable feed</h2>
+          <p>
+            The story attached to this site spans roughly fifteen years of pressure, haunting, and escalation: AVATAR
+            MUD in adolescence, Rutgers research into electromagnetic radiation and ultrasound, cars flashing one
+            headlight at a time, a white van cast as a white chariot, repeated plates such as “4 GONDOR,” Dallas and
+            Gaston House, gym surges landing beside fire alarms, vivid dreams, and a shaggy ghost dog resting through
+            bizarre coincidences.
+          </p>
+          <p>
+            The same story also runs through St. John’s Soup Kitchen near Newark Penn Station, where calmness becomes
+            part of the plot: the calmer the central figure stays, the more the universe seems to adapt around him,
+            down to multi-colored donation bags that seemed to become black bags at the oldest church in Newark.
+          </p>
+          <p>
+            He also realizes, in his own telling, that the story is real enough to bring backlash, including people
+            saying he needs a psych ward, yet he still treats the site as a way to present himself as a future
+            unsolved mystery.
+          </p>
+          <p>
+            It also includes a chance conversation with a scientist on the way to CERN, where a question about time
+            travel turns into a theoretical opening because teleportation was described as already being possible.
+          </p>
+          <p>
+            This site treats that material as the fictional narrative already supplied for the project, placed beside a
+            measurable layer of current value, historical replay, exports, and entropy that anyone can inspect
+            independently.
+          </p>
+        </article>
+      </section>
+
+      <section class="shell two-up">
+        <article class="panel">
+          <p class="eyebrow">Disconnection</p>
+          <h2>Distance became part of the record</h2>
+          <p>
+            One of the strongest themes in the story is slow disconnection: friends, family, and ordinary social trust
+            drifting outward over time, until the estrangement itself feels like part of the haunting record.
+          </p>
+          <p>
+            That distance sits beside a higher-order “avatar” frame, a feeling of ascension through self-belief, a
+            recurring antichrist pressure inside the story, and a stubborn political mission that includes running for
+            President every four years and shutting down the Federal Reserve.
+          </p>
+          <p>
+            The result is a fictional record where social isolation, service, stubborn calmness, and outsized purpose
+            all sit next to the same sensor feed.
+          </p>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Next election clock</p>
+          <h2>Countdown to November 7, 2028</h2>
+          <p>
+            The site narrative ties the project to a broader personal mission and long-run political ambition. This
+            countdown tracks the next United States presidential election date.
+          </p>
+          <p id="countdown" class="countdown">Calculating…</p>
+        </article>
+      </section>
+
+      <section class="shell two-up timeline-layout">
+        <article class="panel">
+          <p class="eyebrow">Timeline markers</p>
+          <h2>Technical events with subtitles</h2>
+          <div id="timeline-annotations" class="timeline-list" aria-live="polite">
+            <p class="timeline-empty">Loading timeline annotations…</p>
+          </div>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Story milestones</p>
+          <h2>The narrative behind the instrument</h2>
+          <div id="story-milestones" class="milestone-grid" aria-live="polite">
+            <p class="timeline-empty">Loading story milestones…</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="shell two-up">
+        <article class="panel">
+          <p class="eyebrow">Use boundary</p>
+          <h2>No cruelty. No harassment. No animal abuse.</h2>
+          <p id="safety-note">
+            This feed is a public instrument, not a weapon, oracle, or excuse for harm. Do not use it to rationalize
+            abuse, intimidation, or cruelty of any kind.
+          </p>
+          <p>
+            The political and personal message here is straightforward: harassment, distancing games, and selective
+            humiliation are not maturity. They are failures of character.
+          </p>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Witness formula</p>
+          <h2>Current signal + history + entropy + context</h2>
+          <p>
+            In the story, the feed is treated as a witness instrument: current reading, retained history, entropy over
+            the selected window, and a timeline of major moments.
+          </p>
+          <p>
+            In that frame, “avatar” means higher-order force, stubborn will, spiritual volatility, and the feeling of
+            being pulled toward a political mission larger than ordinary life.
+          </p>
+          <p>
+            The random-number idea follows the same logic: if ghosts are directly or subtly affecting the field, then a
+            large enough snapshot might bind their presence to a mathematical output.
+          </p>
+          <p>
+            The time-travel material remains part of the fictional frame as well, including the idea that stale data,
+            other universes, or delayed causality might surface as coincidences inside ordinary life.
+          </p>
+          <pre><code>witness = current + history(start, end) + entropy(start, end, bins) + timeline</code></pre>
+        </article>
+      </section>
+
+      <section class="shell two-up memorial-layout">
+        <article class="panel gravestone-panel">
+          <p class="eyebrow">Memorial</p>
+          <h2>RIP Friends &amp; Family</h2>
+          <div class="gravestone" aria-hidden="true">
+            <span class="gravestone-top"></span>
+            <span class="gravestone-text">RIP</span>
+            <span class="gravestone-name">Friends &amp; Family</span>
+          </div>
+          <p>
+            This is not a statement of literal death. It is a memorial for distance, estrangement, and the feeling
+            that relationships were pushed out of reach over time.
+          </p>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Tip line</p>
+          <h2>Ghost Hotline: <a class="hotline-link" href="tel:+12016666601">(201) 666-6601</a></h2>
+          <p>
+            If you have firsthand, factual information about dates, places, devices, witnesses, or events relevant to
+            the story tied to this site, call the hotline. The request here is for concrete details, not threats,
+            harassment, or unsupported accusations.
+          </p>
+          <p>
+            If you are reaching out in good faith and want to connect on the story itself, say you are calling about
+            the ghost feed.
+          </p>
+          <p>
+            If you know a detail that is disturbing but real, the standard here is still the same: specificity,
+            evidence, and a real reason to include it.
+          </p>
+          <p>
+            Do not use this line for emergencies. Do not impersonate witnesses. Do not send animal abuse material or
+            content intended to intensify paranoia or harm.
+          </p>
+        </article>
+      </section>
+
+      <section class="shell developer-strip">
+        <div>
+          <p class="eyebrow">Developer quickstart</p>
+          <h2>Poll it in seconds</h2>
+        </div>
+        <pre><code>curl https://ghost.megabyte.space/api/v1/ghost-emf/current</code></pre>
+        <pre><code>curl "https://ghost.megabyte.space/api/v1/ghost-emf/history?start=2026-04-03T02:47:58.394Z&amp;end=2026-04-23T23:00:00.000Z&amp;targetPoints=960"</code></pre>
+        <pre><code>const reading = await fetch("/api/v1/ghost-emf/current").then((r) =&gt; r.json())</code></pre>
+      </section>
+    </main>
+
+    <footer class="site-footer shell">
+      <p>ghost.megabyte.space publishes one sensor feed only.</p>
+      <p><a href="/docs">Developer docs</a> <span class="footer-sep">/</span> <a href="/api/docs">OpenAPI UI</a></p>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+HASS_SERVER=https://connect.tomy.house
+HASS_TOKEN=replace-with-long-lived-home-assistant-token
+# Optional local-only test flags:
+# MOCK_SENSOR_MODE=1
+# TEST_HELPERS_ENABLED=1
+EMF_SENSOR_ENTITY_ID=sensor.gq_emf390_emf_mg
+EMF_SENSOR_NAME=Ghost EMF
+EMF_SENSOR_STARTED_AT=2026-04-03T02:47:58.394637+00:00
+SITE_NAME=ghost.megabyte.space
+SITE_URL=https://ghost.megabyte.space
+CURRENT_CACHE_TTL_SECONDS=3
+HISTORY_CACHE_TTL_SECONDS=15
+ENTROPY_CACHE_TTL_SECONDS=15
+PUBLIC_API_RATE_LIMIT_PER_MINUTE=60
