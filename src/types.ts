@@ -7,6 +7,8 @@ export interface Env {
   MOCK_SENSOR_MODE?: string;
   TEST_HELPERS_ENABLED?: string;
   EMF_SENSOR_ENTITY_ID: string;
+  EF_SENSOR_ENTITY_ID?: string;
+  RF_SENSOR_ENTITY_ID?: string;
   EMF_SENSOR_NAME?: string;
   EMF_SENSOR_STARTED_AT?: string;
   SITE_NAME?: string;
@@ -15,6 +17,10 @@ export interface Env {
   HISTORY_CACHE_TTL_SECONDS?: string;
   ENTROPY_CACHE_TTL_SECONDS?: string;
   PUBLIC_API_RATE_LIMIT_PER_MINUTE?: string;
+  ANTHROPIC_API_KEY?: string;
+  TWILIO_ACCOUNT_SID?: string;
+  TWILIO_AUTH_TOKEN?: string;
+  TWILIO_PHONE_NUMBER?: string;
 }
 
 export interface HomeAssistantState {
@@ -92,4 +98,44 @@ export interface StoryMilestone {
   title: string;
   subtitle: string;
   body: string;
+}
+
+export interface TimelineEvent {
+  id: string;
+  date: string;
+  title: string;
+  body: string;
+  category: string;
+  severity?: number;
+}
+
+export interface TimelineCategory {
+  label: string;
+  color: string;
+}
+
+export interface TimelineData {
+  title: string;
+  description: string;
+  categories: Record<string, TimelineCategory>;
+  events: TimelineEvent[];
+}
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+  ipAddress?: string;
+}
+
+export interface CallTransmission {
+  id: string;
+  callSid: string;
+  callerNumber: string;
+  transcript: string;
+  aiResponse: string;
+  turnNumber: number;
+  createdAt: string;
 }

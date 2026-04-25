@@ -53,6 +53,11 @@ export async function waitForHomepageReady(page) {
   await expect(page.locator("#sheets-formula")).toContainText("IMPORTDATA");
 }
 
+export async function waitForTimelineReady(page) {
+  await expect(page.locator("#timeline-track")).not.toBeEmpty();
+  await expect(page.locator(".timeline-node")).toHaveCount({ minimum: 1 });
+}
+
 export function trackConsoleErrors(page) {
   const errors = [];
   page.on("console", (message) => {

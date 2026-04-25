@@ -1,728 +1,1218 @@
-const currentValueEl = document.getElementById("current-value");
-const currentUnitEl = document.getElementById("current-unit");
-const currentStateEl = document.getElementById("current-state");
-const lastUpdatedEl = document.getElementById("last-updated");
-const entropyValueEl = document.getElementById("entropy-value");
-const cacheStatusEl = document.getElementById("cache-status");
-const chartMetaEl = document.getElementById("chart-meta");
-const chartEventsEl = document.getElementById("chart-events");
-const countdownEl = document.getElementById("countdown");
-const chartCanvas = document.getElementById("history-chart");
-const historyFormEl = document.getElementById("history-range-form");
-const historyStartEl = document.getElementById("history-start");
-const historyEndEl = document.getElementById("history-end");
-const earliestKnownFactEl = document.getElementById("earliest-known-fact");
-const timelineAnnotationsEl = document.getElementById("timeline-annotations");
-const storyMilestonesEl = document.getElementById("story-milestones");
-const safetyNoteEl = document.getElementById("safety-note");
-const snapshotJsonLinkEl = document.getElementById("snapshot-json-link");
-const exportCsvLinkEl = document.getElementById("export-csv-link");
-const exportExcelLinkEl = document.getElementById("export-excel-link");
-const sheetsFormulaEl = document.getElementById("sheets-formula");
-const copySheetsFormulaButtonEl = document.getElementById("copy-sheets-formula");
-const copySheetsStatusEl = document.getElementById("copy-sheets-status");
-const copyRangeLinkButtonEl = document.getElementById("copy-range-link");
-const copyRangeStatusEl = document.getElementById("copy-range-status");
-const snapshotStorageNoteEl = document.getElementById("snapshot-storage-note");
-const randomNumberEl = document.getElementById("random-number");
-const randomMetaEl = document.getElementById("random-meta");
-const randomJsonLinkEl = document.getElementById("random-json-link");
-const rangeButtons = Array.from(document.querySelectorAll(".range-button[data-range]"));
+/* Ghost Signal — Frontend Controller */
 
-const appState = {
+const $ = (id) => document.getElementById(id);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+const currentValueEl = $("current-value");
+const currentUnitEl = $("current-unit");
+const currentStateEl = $("current-state");
+const entropyValueEl = $("entropy-value");
+const signalAgeEl = $("signal-age");
+const transmissionCountEl = $("transmission-count");
+const chartCanvas = $("history-chart");
+const chartMetaEl = $("chart-meta");
+const historyFormEl = $("history-range-form");
+const historyStartEl = $("history-start");
+const historyEndEl = $("history-end");
+const earliestKnownFactEl = $("earliest-known-fact");
+const snapshotJsonLinkEl = $("snapshot-json-link");
+const exportCsvLinkEl = $("export-csv-link");
+const exportExcelLinkEl = $("export-excel-link");
+const snapshotCsvLinkEl = $("snapshot-csv-link");
+const snapshotExcelLinkEl = $("snapshot-excel-link");
+const sheetsFormulaEl = $("sheets-formula");
+const copySheetsFormulaEl = $("copy-sheets-formula");
+const copySheetsStatusEl = $("copy-sheets-status");
+const copyRangeLinkEl = $("copy-range-link");
+const randomNumberEl = $("random-number");
+const randomMetaEl = $("random-meta");
+const safetyNoteEl = $("safety-note");
+const countdownEl = $("countdown");
+const timelineTrackEl = $("timeline-track");
+const timelineContainerEl = $("timeline-container");
+const timelineDetailEl = $("timeline-detail");
+const chatToggleEl = $("chat-toggle");
+const chatPanelEl = $("chat-panel");
+const chatCloseEl = $("chat-close");
+const chatFormEl = $("chat-form");
+const chatInputEl = $("chat-input");
+const chatMessagesEl = $("chat-messages");
+const openChatEl = $("open-chat");
+const rangeButtons = $$(".range-button[data-range]");
+const efValueEl = $("ef-value");
+const efUnitEl = $("ef-unit");
+const efStateEl = $("ef-state");
+const rfValueEl = $("rf-value");
+const rfUnitEl = $("rf-unit");
+const rfStateEl = $("rf-state");
+const teleEmfEl = $("tele-emf");
+const teleEfEl = $("tele-ef");
+const teleRfEl = $("tele-rf");
+const teleEntropyEl = $("tele-entropy");
+const teleAgeEl = $("tele-age");
+const teleTxEl = $("tele-tx");
+const teleRangeEl = $("tele-range");
+
+const CATEGORY_COLORS = {
+  signal: "#FF1744",
+  discovery: "#7C3AED",
+  narrative: "#00E5FF",
+  technical: "#7AFFAE",
+  transmission: "#FF6D00",
+};
+
+const state = {
   chartPoints: [],
   meta: null,
   timeline: null,
-  range: {
-    preset: "24h",
-    start: null,
-    end: null,
-  },
+  activeTimelineIndex: -1,
+  chatSessionId: localStorage.getItem("ghost-chat-session") || crypto.randomUUID(),
+  chatOpen: false,
+  range: { preset: "24h", start: null, end: null },
 };
 
-function formatRelativeTimestamp(isoString) {
-  const parsed = new Date(isoString);
-  if (Number.isNaN(parsed.getTime())) {
-    return "Unknown";
-  }
+localStorage.setItem("ghost-chat-session", state.chatSessionId);
 
-  return parsed.toLocaleString();
+/* ── Helpers ── */
+
+function formatTimestamp(iso) {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "Unknown" : d.toLocaleString();
 }
 
-function formatInputDateTime(isoString) {
-  const parsed = new Date(isoString);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-
-  const offsetMs = parsed.getTimezoneOffset() * 60_000;
-  return new Date(parsed.getTime() - offsetMs).toISOString().slice(0, 16);
+function formatInputDT(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
-function parseInputDateTime(value) {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed.toISOString();
+function parseDT(val) {
+  if (!val) return null;
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-function formatRangeLabel(start, end) {
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return "an unknown range";
-  }
-
-  return `${startDate.toLocaleString()} to ${endDate.toLocaleString()}`;
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
 }
 
-function createElement(tagName, className, text) {
-  const node = document.createElement(tagName);
-  if (className) {
-    node.className = className;
-  }
-  if (typeof text === "string") {
-    node.textContent = text;
-  }
-  return node;
+function formatAge(startIso) {
+  const ms = Date.now() - new Date(startIso).getTime();
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
 }
 
-function getVisibleAnnotations() {
-  if (!appState.timeline?.annotations || !appState.range.start || !appState.range.end) {
-    return [];
-  }
-
-  const start = new Date(appState.range.start).getTime();
-  const end = new Date(appState.range.end).getTime();
-
-  return appState.timeline.annotations.filter((annotation) => {
-    const timestamp = new Date(annotation.date).getTime();
-    return Number.isFinite(timestamp) && timestamp >= start && timestamp <= end;
-  });
-}
-
-function drawChart(points) {
-  if (!(chartCanvas instanceof HTMLCanvasElement)) {
-    return;
-  }
-
-  const context = chartCanvas.getContext("2d");
-  if (!context) {
-    return;
-  }
-
-  const width = Math.max(320, chartCanvas.clientWidth);
-  const height = Math.max(320, Math.round(width * 0.36));
-  const ratio = window.devicePixelRatio || 1;
-
-  chartCanvas.width = Math.round(width * ratio);
-  chartCanvas.height = Math.round(height * ratio);
-  context.setTransform(1, 0, 0, 1, 0, 0);
-  context.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-  context.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-  const padding = 26;
-
-  context.strokeStyle = "rgba(122, 255, 174, 0.1)";
-  context.lineWidth = 1;
-  for (let row = 0; row <= 4; row += 1) {
-    const y = padding + ((height - padding * 2) / 4) * row;
-    context.beginPath();
-    context.moveTo(padding, y);
-    context.lineTo(width - padding, y);
-    context.stroke();
-  }
-
-  if (points.length === 0) {
-    context.fillStyle = "rgba(235, 255, 240, 0.78)";
-    context.font = "16px 'JetBrains Mono', monospace";
-    context.fillText("No points available for the selected range.", padding, height / 2);
-    return;
-  }
-
-  const rangeStart = new Date(appState.range.start ?? points[0].timestamp).getTime();
-  const rangeEnd = new Date(appState.range.end ?? points[points.length - 1].timestamp).getTime();
-  const rangeSpan = Math.max(1, rangeEnd - rangeStart);
-  const values = points.map((point) => point.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = Math.max(0.0001, max - min);
-
-  const areaGradient = context.createLinearGradient(0, padding, 0, height - padding);
-  areaGradient.addColorStop(0, "rgba(122, 255, 174, 0.28)");
-  areaGradient.addColorStop(1, "rgba(122, 255, 174, 0)");
-
-  context.beginPath();
-  points.forEach((point, index) => {
-    const x = padding + ((width - padding * 2) / Math.max(1, points.length - 1)) * index;
-    const normalized = (point.value - min) / span;
-    const y = height - padding - normalized * (height - padding * 2);
-
-    if (index === 0) {
-      context.moveTo(x, y);
-    } else {
-      context.lineTo(x, y);
-    }
-  });
-  context.lineTo(width - padding, height - padding);
-  context.lineTo(padding, height - padding);
-  context.closePath();
-  context.fillStyle = areaGradient;
-  context.fill();
-
-  context.lineJoin = "round";
-  context.lineCap = "round";
-  context.lineWidth = 3;
-  context.strokeStyle = "#7affae";
-  context.beginPath();
-
-  points.forEach((point, index) => {
-    const x = padding + ((width - padding * 2) / Math.max(1, points.length - 1)) * index;
-    const normalized = (point.value - min) / span;
-    const y = height - padding - normalized * (height - padding * 2);
-
-    if (index === 0) {
-      context.moveTo(x, y);
-    } else {
-      context.lineTo(x, y);
-    }
-  });
-
-  context.stroke();
-
-  const annotations = getVisibleAnnotations();
-  annotations.slice(0, 6).forEach((annotation, index) => {
-    const timestamp = new Date(annotation.date).getTime();
-    const x = padding + ((timestamp - rangeStart) / rangeSpan) * (width - padding * 2);
-
-    context.strokeStyle = "rgba(214, 255, 166, 0.32)";
-    context.lineWidth = 1;
-    context.beginPath();
-    context.moveTo(x, padding);
-    context.lineTo(x, height - padding);
-    context.stroke();
-
-    context.fillStyle = "rgba(214, 255, 166, 0.88)";
-    context.font = "11px 'JetBrains Mono', monospace";
-    context.fillText(annotation.title, Math.min(x + 4, width - 168), padding + 14 + (index % 2) * 14);
-  });
-
-  const latest = points[points.length - 1];
-  if (latest) {
-    const x = width - padding;
-    const normalized = (latest.value - min) / span;
-    const y = height - padding - normalized * (height - padding * 2);
-
-    context.fillStyle = "#24ff76";
-    context.beginPath();
-    context.arc(x, y, 5.5, 0, Math.PI * 2);
-    context.fill();
-  }
-
-  context.fillStyle = "rgba(235, 255, 240, 0.78)";
-  context.font = "11px 'JetBrains Mono', monospace";
-  context.fillText(`min ${min.toFixed(3)}`, padding, height - 8);
-  context.fillText(`max ${max.toFixed(3)}`, width - padding - 72, height - 8);
-}
-
-function renderTimeline() {
-  if (timelineAnnotationsEl) {
-    timelineAnnotationsEl.replaceChildren();
-
-    const annotations = [...(appState.timeline?.annotations ?? [])].sort(
-      (left, right) => new Date(left.date).getTime() - new Date(right.date).getTime(),
-    );
-
-    if (annotations.length === 0) {
-      timelineAnnotationsEl.append(createElement("p", "timeline-empty", "No timeline annotations available."));
-    } else {
-      annotations.forEach((annotation) => {
-        const item = createElement("article", "timeline-item");
-        const meta = createElement("p", "timeline-date", formatRelativeTimestamp(annotation.date));
-        const title = createElement("h3", "timeline-title", annotation.title);
-        const subtitle = createElement("p", "timeline-subtitle", annotation.subtitle);
-        item.append(meta, title, subtitle);
-        timelineAnnotationsEl.append(item);
-      });
-    }
-  }
-
-  if (storyMilestonesEl) {
-    storyMilestonesEl.replaceChildren();
-
-    const milestones = appState.timeline?.milestones ?? [];
-    if (milestones.length === 0) {
-      storyMilestonesEl.append(createElement("p", "timeline-empty", "No story milestones available."));
-    } else {
-      milestones.forEach((milestone) => {
-        const card = createElement("article", "milestone-card");
-        const era = createElement("p", "milestone-era", milestone.eraLabel);
-        const title = createElement("h3", "milestone-title", milestone.title);
-        const subtitle = createElement("p", "milestone-subtitle", milestone.subtitle);
-        const body = createElement("p", "milestone-body", milestone.body);
-        card.append(era, title, subtitle, body);
-        storyMilestonesEl.append(card);
-      });
-    }
-  }
-
-  if (safetyNoteEl && appState.timeline?.safetyNote) {
-    safetyNoteEl.textContent = appState.timeline.safetyNote;
-  }
-}
-
-function applyPresetButtonState() {
-  rangeButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.range === appState.range.preset);
-  });
-}
+/* ── Range ── */
 
 function getPresetRange(preset) {
-  const end = new Date();
-  const earliest = new Date(appState.meta?.earliestKnownAt ?? end.toISOString());
-  let start = new Date(end.getTime() - 24 * 60 * 60_000);
-
-  if (preset === "7d") {
-    start = new Date(end.getTime() - 7 * 24 * 60 * 60_000);
-  } else if (preset === "30d") {
-    start = new Date(end.getTime() - 30 * 24 * 60 * 60_000);
-  } else if (preset === "all") {
-    start = earliest;
-  }
-
-  if (start.getTime() < earliest.getTime()) {
-    start = earliest;
-  }
-
-  return {
-    start: start.toISOString(),
-    end: end.toISOString(),
-  };
+  const now = new Date();
+  const earliest = new Date(state.meta?.earliestKnownAt ?? now.toISOString());
+  let start = new Date(now.getTime() - 24 * 3600000);
+  if (preset === "7d") start = new Date(now.getTime() - 7 * 86400000);
+  else if (preset === "30d") start = new Date(now.getTime() - 30 * 86400000);
+  else if (preset === "all") start = earliest;
+  if (start < earliest) start = earliest;
+  return { start: start.toISOString(), end: now.toISOString() };
 }
 
 function setRange(preset, range) {
-  appState.range = {
-    preset,
-    start: range.start,
-    end: range.end,
-  };
-
-  if (historyStartEl instanceof HTMLInputElement) {
-    historyStartEl.value = formatInputDateTime(range.start);
-  }
-  if (historyEndEl instanceof HTMLInputElement) {
-    historyEndEl.value = formatInputDateTime(range.end);
-  }
-
-  applyPresetButtonState();
+  state.range = { preset, ...range };
+  if (historyStartEl) historyStartEl.value = formatInputDT(range.start);
+  if (historyEndEl) historyEndEl.value = formatInputDT(range.end);
+  rangeButtons.forEach((b) => b.classList.toggle("is-active", b.dataset.range === preset));
+  if (teleRangeEl) teleRangeEl.textContent = preset === "custom" ? "custom" : preset;
   updateRangeUrl();
 }
 
-function refreshPresetWindow() {
-  if (appState.range.preset !== "custom") {
-    setRange(appState.range.preset, getPresetRange(appState.range.preset));
-  }
+function refreshPreset() {
+  if (state.range.preset !== "custom") setRange(state.range.preset, getPresetRange(state.range.preset));
 }
 
 function updateRangeUrl() {
-  const url = new URL(window.location.href);
-  url.searchParams.delete("range");
-  url.searchParams.delete("start");
-  url.searchParams.delete("end");
-
-  if (appState.range.preset === "custom" && appState.range.start && appState.range.end) {
-    url.searchParams.set("start", appState.range.start);
-    url.searchParams.set("end", appState.range.end);
-  } else if (appState.range.preset) {
-    url.searchParams.set("range", appState.range.preset);
+  const u = new URL(location.href);
+  u.searchParams.delete("range");
+  u.searchParams.delete("start");
+  u.searchParams.delete("end");
+  if (state.range.preset === "custom" && state.range.start && state.range.end) {
+    u.searchParams.set("start", state.range.start);
+    u.searchParams.set("end", state.range.end);
+  } else if (state.range.preset) {
+    u.searchParams.set("range", state.range.preset);
   }
-
-  window.history.replaceState({}, "", url);
+  history.replaceState({}, "", u);
 }
 
 function parseInitialRange() {
-  const url = new URL(window.location.href);
-  const start = url.searchParams.get("start");
-  const end = url.searchParams.get("end");
-  const preset = url.searchParams.get("range");
+  const u = new URL(location.href);
+  const s = u.searchParams.get("start"), e = u.searchParams.get("end"), p = u.searchParams.get("range");
+  if (s && e) {
+    const sd = new Date(s), ed = new Date(e);
+    if (!Number.isNaN(sd.getTime()) && !Number.isNaN(ed.getTime()) && ed > sd)
+      return { preset: "custom", start: sd.toISOString(), end: ed.toISOString() };
+  }
+  if (p && ["24h", "7d", "30d", "all"].includes(p)) {
+    const r = getPresetRange(p);
+    return { preset: p, ...r };
+  }
+  const r = getPresetRange("24h");
+  return { preset: "24h", ...r };
+}
 
-  if (start && end) {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    if (!Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime()) && endDate.getTime() > startDate.getTime()) {
-      return {
-        preset: "custom",
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-      };
+function rangeParams() {
+  const p = new URLSearchParams();
+  if (state.range.start) p.set("start", state.range.start);
+  if (state.range.end) p.set("end", state.range.end);
+  const tp = chartCanvas ? Math.min(1440, Math.max(160, Math.round(chartCanvas.clientWidth * 1.15))) : 720;
+  p.set("targetPoints", String(tp));
+  return p;
+}
+
+function snapshotParams() {
+  const p = new URLSearchParams();
+  if (state.range.start) p.set("start", state.range.start);
+  if (state.range.end) p.set("end", state.range.end);
+  return p;
+}
+
+function updateExportLinks() {
+  const sp = snapshotParams().toString();
+  const csvP = new URLSearchParams(snapshotParams()); csvP.set("format", "csv");
+  const xlP = new URLSearchParams(snapshotParams()); xlP.set("format", "excel");
+  [snapshotJsonLinkEl].forEach((a) => { if (a) a.href = `/api/v1/ghost-emf/snapshot?${sp}`; });
+  [exportCsvLinkEl, snapshotCsvLinkEl].forEach((a) => { if (a) a.href = `/api/v1/ghost-emf/export?${csvP}`; });
+  [exportExcelLinkEl, snapshotExcelLinkEl].forEach((a) => { if (a) a.href = `/api/v1/ghost-emf/export?${xlP}`; });
+}
+
+/* ── Chart ── */
+
+function drawChart(points) {
+  if (!(chartCanvas instanceof HTMLCanvasElement)) return;
+  const ctx = chartCanvas.getContext("2d");
+  if (!ctx) return;
+
+  const w = Math.max(320, chartCanvas.clientWidth);
+  const h = Math.max(300, Math.round(w * 0.35));
+  const dpr = devicePixelRatio || 1;
+  chartCanvas.width = Math.round(w * dpr);
+  chartCanvas.height = Math.round(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const padTop = 28, padRight = 28, padBottom = 38, padLeft = 52;
+  const pad = padTop; // legacy compat for area fills
+
+  // Grid lines
+  ctx.strokeStyle = "rgba(255, 23, 68, 0.06)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padTop + ((h - padTop - padBottom) / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padLeft, y); ctx.lineTo(w - padRight, y); ctx.stroke();
+  }
+
+  if (points.length === 0) {
+    ctx.fillStyle = "rgba(240, 230, 255, 0.6)";
+    ctx.font = "14px 'JetBrains Mono', monospace";
+    ctx.fillText("No data for this range.", padLeft, h / 2);
+    return;
+  }
+
+  const vals = points.map((p) => p.value);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = Math.max(0.0001, max - min);
+  const rangeStart = new Date(state.range.start ?? points[0].timestamp).getTime();
+  const rangeEnd = new Date(state.range.end ?? points[points.length - 1].timestamp).getTime();
+  const rangeSpan = Math.max(1, rangeEnd - rangeStart);
+
+  function px(pt, i) {
+    const t = new Date(pt.timestamp).getTime();
+    const x = padLeft + ((t - rangeStart) / rangeSpan) * (w - padLeft - padRight);
+    const norm = (pt.value - min) / span;
+    const y = h - padBottom - norm * (h - padTop - padBottom);
+    return { x, y };
+  }
+
+  // Area gradient (red to transparent)
+  const areaGrad = ctx.createLinearGradient(0, padTop, 0, h - padBottom);
+  areaGrad.addColorStop(0, "rgba(255, 23, 68, 0.18)");
+  areaGrad.addColorStop(0.5, "rgba(124, 58, 237, 0.08)");
+  areaGrad.addColorStop(1, "rgba(122, 255, 174, 0)");
+
+  ctx.beginPath();
+  points.forEach((pt, i) => {
+    const { x, y } = px(pt, i);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  const lastPx = px(points[points.length - 1]);
+  const firstPx = px(points[0]);
+  ctx.lineTo(lastPx.x, h - padBottom);
+  ctx.lineTo(firstPx.x, h - padBottom);
+  ctx.closePath();
+  ctx.fillStyle = areaGrad;
+  ctx.fill();
+
+  // Line
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.lineWidth = 2.5;
+
+  const lineGrad = ctx.createLinearGradient(padLeft, 0, w - padRight, 0);
+  lineGrad.addColorStop(0, "#FF1744");
+  lineGrad.addColorStop(0.5, "#7C3AED");
+  lineGrad.addColorStop(1, "#7AFFAE");
+  ctx.strokeStyle = lineGrad;
+
+  ctx.beginPath();
+  points.forEach((pt, i) => {
+    const { x, y } = px(pt, i);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Timeline annotations on chart
+  const events = state.timeline?.events ?? [];
+  const visibleEvents = events.filter((ev) => {
+    const t = new Date(ev.date).getTime();
+    return t >= rangeStart && t <= rangeEnd;
+  });
+  visibleEvents.slice(0, 6).forEach((ev, i) => {
+    const t = new Date(ev.date).getTime();
+    const x = padLeft + ((t - rangeStart) / rangeSpan) * (w - padLeft - padRight);
+    const color = CATEGORY_COLORS[ev.category] || "#FF6D00";
+    ctx.strokeStyle = color + "44";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, padTop); ctx.lineTo(x, h - padBottom); ctx.stroke();
+    ctx.fillStyle = color + "BB";
+    ctx.font = "10px 'JetBrains Mono', monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(ev.title, Math.min(x + 4, w - 140), padTop + 13 + (i % 3) * 13);
+  });
+
+  // Latest point dot
+  if (points.length > 0) {
+    const last = px(points[points.length - 1]);
+    ctx.fillStyle = "#FF1744";
+    ctx.beginPath(); ctx.arc(last.x, last.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#FF174466";
+    ctx.beginPath(); ctx.arc(last.x, last.y, 10, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Y-axis value labels
+  ctx.fillStyle = "rgba(240, 230, 255, 0.4)";
+  ctx.font = "9px 'JetBrains Mono', monospace";
+  ctx.textAlign = "right";
+  for (let i = 0; i <= 4; i++) {
+    const frac = i / 4;
+    const val = min + span * (1 - frac);
+    const y = padTop + ((h - padTop - padBottom) / 4) * i;
+    ctx.fillText(val.toFixed(3), padLeft - 4, y + 3);
+  }
+
+  // X-axis time labels
+  ctx.textAlign = "center";
+  const tickCount = Math.min(6, Math.max(3, Math.floor(w / 160)));
+  for (let i = 0; i <= tickCount; i++) {
+    const frac = i / tickCount;
+    const t = new Date(rangeStart + rangeSpan * frac);
+    const x = padLeft + frac * (w - padLeft - padRight);
+    const label = rangeSpan > 7 * 86400000
+      ? t.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+      : t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    ctx.fillText(label, x, h - 6);
+    ctx.strokeStyle = "rgba(255, 23, 68, 0.04)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, padTop); ctx.lineTo(x, h - padBottom); ctx.stroke();
+  }
+  ctx.textAlign = "left";
+}
+
+/* ── Timeline Navigator ── */
+
+function renderTimeline() {
+  if (!timelineTrackEl || !state.timeline?.events) return;
+  timelineTrackEl.replaceChildren();
+
+  const events = [...state.timeline.events].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const now = new Date();
+
+  events.forEach((ev, i) => {
+    const color = CATEGORY_COLORS[ev.category] || "#FF6D00";
+    const isFuture = new Date(ev.date) > now;
+    const side = i % 2 === 0 ? "left" : "right";
+
+    const item = el("div", `tl-item tl-${side}${isFuture ? " tl-future" : ""}`);
+    item.setAttribute("role", "listitem");
+
+    // Dot on the spine
+    const dot = el("div", "tl-dot");
+    dot.style.borderColor = color;
+    dot.style.setProperty("--dot-color", color);
+    if (i === events.length - 1 || (events[i + 1] && new Date(events[i + 1].date) > now && !isFuture)) {
+      dot.classList.add("tl-dot-now");
     }
-  }
 
-  if (preset && ["24h", "7d", "30d", "all"].includes(preset)) {
-    const range = getPresetRange(preset);
-    return {
-      preset,
-      start: range.start,
-      end: range.end,
-    };
-  }
-
-  const range = getPresetRange("24h");
-  return {
-    preset: "24h",
-    start: range.start,
-    end: range.end,
-  };
+    // Card
+    const card = el("div", "tl-card");
+    card.style.setProperty("--card-accent", color);
+    const dateStr = new Date(ev.date).toLocaleDateString("en-US", { year: "numeric", month: "short" });
+    const header = el("div", "tl-card-header");
+    const dateEl = el("span", "tl-date", dateStr);
+    const catEl = el("span", "tl-cat", ev.category);
+    catEl.style.color = color;
+    header.append(dateEl, catEl);
+    const title = el("h3", "tl-title", ev.title);
+    const body = el("p", "tl-body", ev.body);
+    const severity = el("div", "tl-severity");
+    for (let s = 0; s < 5; s++) {
+      const pip = el("span", s < ev.severity ? "tl-pip tl-pip-on" : "tl-pip");
+      pip.style.setProperty("--pip-color", color);
+      severity.append(pip);
+    }
+    card.append(header, title, body, severity);
+    item.append(dot, card);
+    timelineTrackEl.append(item);
+  });
 }
 
-function getTargetPoints() {
-  if (!(chartCanvas instanceof HTMLCanvasElement)) {
-    return 720;
-  }
-
-  return Math.min(1440, Math.max(160, Math.round(chartCanvas.clientWidth * 1.15)));
+function selectTimelineEvent(index) {
+  // Vertical timeline doesn't need selection — all events visible
+  state.activeTimelineIndex = index;
 }
 
-function buildRangeSearchParams() {
-  const params = new URLSearchParams();
-  if (appState.range.start) {
-    params.set("start", appState.range.start);
-  }
-  if (appState.range.end) {
-    params.set("end", appState.range.end);
-  }
-  params.set("targetPoints", String(getTargetPoints()));
-  return params;
+/* ── Chat ── */
+
+function toggleChat(open) {
+  state.chatOpen = open ?? !state.chatOpen;
+  chatPanelEl?.classList.toggle("is-open", state.chatOpen);
+  chatToggleEl?.setAttribute("aria-expanded", String(state.chatOpen));
+  chatPanelEl?.setAttribute("aria-hidden", String(!state.chatOpen));
+  if (state.chatOpen) chatInputEl?.focus();
 }
 
-function buildSnapshotSearchParams() {
-  const params = new URLSearchParams();
-  if (appState.range.start) {
-    params.set("start", appState.range.start);
-  }
-  if (appState.range.end) {
-    params.set("end", appState.range.end);
-  }
-  return params;
+function addChatMessage(role, text) {
+  if (!chatMessagesEl) return;
+  const msg = el("div", `chat-message chat-${role}`);
+  const p = el("p", null, text);
+  msg.append(p);
+  chatMessagesEl.append(msg);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
-function updateSnapshotLinks() {
-  const params = buildSnapshotSearchParams();
-  const snapshotSearch = params.toString();
-  const csvParams = new URLSearchParams(params);
-  csvParams.set("format", "csv");
-  const excelParams = new URLSearchParams(params);
-  excelParams.set("format", "excel");
+function showTyping() {
+  if (!chatMessagesEl) return;
+  const typing = el("div", "chat-message chat-assistant chat-typing-msg");
+  typing.id = "chat-typing";
+  const p = el("p", "chat-typing", "The signal is processing...");
+  typing.append(p);
+  chatMessagesEl.append(typing);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
 
-  if (snapshotJsonLinkEl instanceof HTMLAnchorElement) {
-    snapshotJsonLinkEl.href = `/api/v1/ghost-emf/snapshot?${snapshotSearch}`;
-  }
-  if (exportCsvLinkEl instanceof HTMLAnchorElement) {
-    exportCsvLinkEl.href = `/api/v1/ghost-emf/export?${csvParams.toString()}`;
-  }
-  if (exportExcelLinkEl instanceof HTMLAnchorElement) {
-    exportExcelLinkEl.href = `/api/v1/ghost-emf/export?${excelParams.toString()}`;
-  }
-  if (randomJsonLinkEl instanceof HTMLAnchorElement) {
-    randomJsonLinkEl.href = `/api/v1/ghost-emf/random?${snapshotSearch}`;
+function removeTyping() {
+  const t = $("chat-typing");
+  if (t) t.remove();
+}
+
+async function sendChatMessage(message) {
+  addChatMessage("user", message);
+  showTyping();
+
+  try {
+    const res = await fetch("/api/v1/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message, sessionId: state.chatSessionId }),
+    });
+
+    removeTyping();
+
+    if (!res.ok) {
+      addChatMessage("assistant", "The signal encountered interference. Try again.");
+      return;
+    }
+
+    const data = await res.json();
+    if (data.sessionId) {
+      state.chatSessionId = data.sessionId;
+      localStorage.setItem("ghost-chat-session", data.sessionId);
+    }
+    addChatMessage("assistant", data.response);
+  } catch {
+    removeTyping();
+    addChatMessage("assistant", "Connection lost. The signal will return.");
   }
 }
+
+/* ── API Loaders ── */
 
 async function loadMeta() {
-  const response = await fetch("/api/v1/ghost-emf/meta", { headers: { accept: "application/json" } });
-  if (!response.ok) {
-    throw new Error(`Meta request failed with ${response.status}`);
-  }
-
-  appState.meta = await response.json();
-
-  if (earliestKnownFactEl && appState.meta?.earliestKnownAt) {
-    earliestKnownFactEl.textContent = `Earliest retained reading: ${formatRelativeTimestamp(appState.meta.earliestKnownAt)}`;
-  }
-
-  if (snapshotStorageNoteEl) {
-    snapshotStorageNoteEl.textContent =
-      appState.meta?.historyMode === "d1"
-        ? "Serverless D1 snapshots are active and stored once per minute by the Worker cron trigger."
-        : "D1 snapshot storage is not active yet. Export and reproducible random numbers require EMF_DB.";
+  const res = await fetch("/api/v1/ghost-emf/meta", { headers: { accept: "application/json" } });
+  if (!res.ok) return;
+  state.meta = await res.json();
+  if (earliestKnownFactEl && state.meta?.earliestKnownAt)
+    earliestKnownFactEl.textContent = `Earliest reading: ${formatTimestamp(state.meta.earliestKnownAt)}`;
+  if (signalAgeEl && state.meta?.earliestKnownAt) {
+    signalAgeEl.textContent = formatAge(state.meta.earliestKnownAt);
+    if (teleAgeEl) teleAgeEl.textContent = formatAge(state.meta.earliestKnownAt);
   }
 }
 
 async function loadTimeline() {
-  const response = await fetch("/api/v1/ghost-emf/timeline", { headers: { accept: "application/json" } });
-  if (!response.ok) {
-    throw new Error(`Timeline request failed with ${response.status}`);
-  }
-
-  appState.timeline = await response.json();
+  const res = await fetch("/api/v1/ghost-emf/timeline", { headers: { accept: "application/json" } });
+  if (!res.ok) return;
+  state.timeline = await res.json();
   renderTimeline();
+  if (safetyNoteEl && state.timeline?.safetyNote) safetyNoteEl.textContent = state.timeline.safetyNote;
 }
 
 async function loadCurrent() {
-  const response = await fetch("/api/v1/ghost-emf/current", { headers: { accept: "application/json" } });
-  if (!response.ok) {
-    throw new Error(`Current request failed with ${response.status}`);
+  const res = await fetch("/api/v1/sensors", { headers: { accept: "application/json" } });
+  if (!res.ok) return;
+  const d = await res.json();
+
+  // EMF (primary)
+  if (d.emf) {
+    if (currentValueEl) currentValueEl.textContent = Number(d.emf.numericValue).toFixed(3);
+    if (currentUnitEl) currentUnitEl.textContent = d.emf.unit ? ` ${d.emf.unit}` : "";
+    if (currentStateEl) currentStateEl.textContent = `${d.emf.friendlyName} reporting ${d.emf.state}.`;
+    if (teleEmfEl) teleEmfEl.textContent = Number(d.emf.numericValue).toFixed(3);
   }
 
-  const payload = await response.json();
-  if (currentValueEl) {
-    currentValueEl.textContent = Number(payload.numericValue).toFixed(3);
+  // EF
+  if (d.ef) {
+    if (efValueEl) efValueEl.textContent = Number(d.ef.numericValue).toFixed(1);
+    if (efUnitEl) efUnitEl.textContent = d.ef.unit ? ` ${d.ef.unit}` : "";
+    if (efStateEl) efStateEl.textContent = `${d.ef.friendlyName} reporting ${d.ef.state}.`;
+    if (teleEfEl) teleEfEl.textContent = Number(d.ef.numericValue).toFixed(1);
   }
-  if (currentUnitEl) {
-    currentUnitEl.textContent = payload.unit ? ` ${payload.unit}` : "";
-  }
-  if (currentStateEl) {
-    currentStateEl.textContent = `${payload.friendlyName} is reporting ${payload.state}.`;
-  }
-  if (lastUpdatedEl) {
-    lastUpdatedEl.textContent = formatRelativeTimestamp(payload.lastUpdated);
-  }
-  if (cacheStatusEl) {
-    cacheStatusEl.textContent = response.headers.get("x-cache-status") ?? "MISS";
+
+  // RF
+  if (d.rf) {
+    if (rfValueEl) rfValueEl.textContent = Number(d.rf.numericValue).toFixed(3);
+    if (rfUnitEl) rfUnitEl.textContent = d.rf.unit ? ` ${d.rf.unit}` : "";
+    if (rfStateEl) rfStateEl.textContent = `${d.rf.friendlyName} reporting ${d.rf.state}.`;
+    if (teleRfEl) teleRfEl.textContent = Number(d.rf.numericValue).toFixed(3);
   }
 }
 
 async function loadHistory() {
-  const response = await fetch(`/api/v1/ghost-emf/history?${buildRangeSearchParams().toString()}`, {
-    headers: { accept: "application/json" },
-  });
-  if (!response.ok) {
-    throw new Error(`History request failed with ${response.status}`);
-  }
-
-  const payload = await response.json();
-  appState.chartPoints = Array.isArray(payload.points) ? payload.points : [];
-  drawChart(appState.chartPoints);
-
-  if (chartMetaEl) {
-    chartMetaEl.textContent =
-      `${payload.displayPointCount} visible points from ${payload.rawPointCount} retained samples across ${formatRangeLabel(payload.start, payload.end)}.`;
-  }
-
-  if (chartEventsEl) {
-    const visibleAnnotations = getVisibleAnnotations();
-    chartEventsEl.textContent =
-      visibleAnnotations.length > 0
-        ? `${visibleAnnotations.length} dated marker${visibleAnnotations.length === 1 ? "" : "s"} in view: ${visibleAnnotations.map((annotation) => annotation.title).join(", ")}.`
-        : "No dated technical markers fall inside the selected range.";
-  }
+  const res = await fetch(`/api/v1/ghost-emf/history?${rangeParams()}`, { headers: { accept: "application/json" } });
+  if (!res.ok) return;
+  const d = await res.json();
+  state.chartPoints = Array.isArray(d.points) ? d.points : [];
+  drawChart(state.chartPoints);
+  if (chartMetaEl)
+    chartMetaEl.textContent = `${d.displayPointCount} points from ${d.rawPointCount} samples.`;
 }
 
 async function loadEntropy() {
-  const params = buildRangeSearchParams();
-  params.set("bins", "24");
-  const response = await fetch(`/api/v1/ghost-emf/entropy?${params.toString()}`, {
-    headers: { accept: "application/json" },
-  });
-  if (!response.ok) {
-    throw new Error(`Entropy request failed with ${response.status}`);
-  }
+  const p = rangeParams(); p.set("bins", "24");
+  const res = await fetch(`/api/v1/ghost-emf/entropy?${p}`, { headers: { accept: "application/json" } });
+  if (!res.ok) return;
+  const d = await res.json();
+  if (entropyValueEl) entropyValueEl.textContent = `${Number(d.entropyBits).toFixed(4)} bits`;
+  if (teleEntropyEl) teleEntropyEl.textContent = Number(d.entropyBits).toFixed(2);
+}
 
-  const payload = await response.json();
-  if (entropyValueEl) {
-    entropyValueEl.textContent = `${Number(payload.entropyBits).toFixed(4)} bits`;
+async function loadTransmissionCount() {
+  try {
+    const res = await fetch("/api/v1/transmission-count", { headers: { accept: "application/json" } });
+    if (!res.ok) return;
+    const d = await res.json();
+    if (transmissionCountEl) transmissionCountEl.textContent = String(d.count);
+    if (teleTxEl) teleTxEl.textContent = String(d.count);
+  } catch { /* ignore */ }
+}
+
+async function loadSnapshotUtils() {
+  updateExportLinks();
+  try {
+    const sp = snapshotParams();
+    const [sheetsRes, randomRes] = await Promise.all([
+      fetch(`/api/v1/ghost-emf/google-sheets?${sp}`, { headers: { accept: "application/json" } }),
+      fetch(`/api/v1/ghost-emf/random?${sp}&digits=10`, { headers: { accept: "application/json" } }),
+    ]);
+    if (sheetsRes.ok) {
+      const s = await sheetsRes.json();
+      if (sheetsFormulaEl) sheetsFormulaEl.textContent = s.importDataFormula;
+    }
+    if (randomRes.ok) {
+      const r = await randomRes.json();
+      if (randomNumberEl) randomNumberEl.textContent = r.randomNumber;
+      if (randomMetaEl) randomMetaEl.textContent = `${r.sampleCount} rows contributed.`;
+    }
+  } catch {
+    if (sheetsFormulaEl) sheetsFormulaEl.textContent = "Export unavailable for this range.";
+    if (randomNumberEl) randomNumberEl.textContent = "--";
   }
 }
 
-async function loadSnapshotUtilities() {
-  updateSnapshotLinks();
+/* ── Story Slider ── */
 
-  const snapshotParams = buildSnapshotSearchParams();
-  const sheetsResponse = await fetch(`/api/v1/ghost-emf/google-sheets?${snapshotParams.toString()}`, {
-    headers: { accept: "application/json" },
+function initStorySlider() {
+  const track = $("story-slider-track");
+  const counter = $("story-slider-counter");
+  if (!track) return;
+
+  const slides = track.querySelectorAll(".slider-slide");
+  const total = slides.length;
+  let current = 0;
+  let autoTimer = null;
+
+  function goTo(index) {
+    current = ((index % total) + total) % total;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    if (counter) counter.textContent = `${current + 1} / ${total}`;
+  }
+
+  const slider = track.closest(".story-slider");
+  if (!slider) return;
+
+  const prevBtn = slider.querySelector(".slider-prev");
+  const nextBtn = slider.querySelector(".slider-next");
+
+  prevBtn?.addEventListener("click", () => { goTo(current - 1); resetAuto(); });
+  nextBtn?.addEventListener("click", () => { goTo(current + 1); resetAuto(); });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  slider.addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  slider.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      goTo(dx > 0 ? current - 1 : current + 1);
+      resetAuto();
+    }
+  }, { passive: true });
+
+  // Auto-advance every 4s
+  function startAuto() { autoTimer = setInterval(() => goTo(current + 1), 4000); }
+  function resetAuto() { clearInterval(autoTimer); startAuto(); }
+  startAuto();
+
+  // Pause on hover
+  slider.addEventListener("mouseenter", () => clearInterval(autoTimer));
+  slider.addEventListener("mouseleave", () => startAuto());
+}
+
+/* ── Polaroid Animation Indexing ── */
+
+function initAvatarSpread() {
+  const photos = $$(".spread-photo");
+  const rotations = [-4, 3, -2, 5, -3, 2, -5, 4, -1, 3, -4, 2, -3, 5, -2, 4, -5, 1];
+  photos.forEach((p, i) => {
+    p.style.setProperty("--i", String(i));
+    p.style.setProperty("--spread-rot", String(rotations[i % rotations.length]));
   });
-  if (!sheetsResponse.ok) {
-    throw new Error(`Google Sheets request failed with ${sheetsResponse.status}`);
-  }
 
-  const randomParams = new URLSearchParams(snapshotParams);
-  randomParams.set("digits", "10");
-  const randomResponse = await fetch(`/api/v1/ghost-emf/random?${randomParams.toString()}`, {
-    headers: { accept: "application/json" },
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = "running";
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+  photos.forEach((p) => {
+    p.style.animationPlayState = "paused";
+    observer.observe(p);
   });
-  if (!randomResponse.ok) {
-    throw new Error(`Random request failed with ${randomResponse.status}`);
+}
+
+/* ── Timeline Scroll Reveal ── */
+
+function initTimelineReveal() {
+  const items = $$(".tl-item");
+  if (!items.length) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+  );
+  items.forEach((item) => observer.observe(item));
+}
+
+/* ── Floating Orbs — ambient particle system ── */
+
+function initOrbs() {
+  const canvas = $("orb-canvas");
+  if (!canvas || !(canvas instanceof HTMLCanvasElement)) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const orbs = [];
+  const ORB_COUNT = 18;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  for (let i = 0; i < ORB_COUNT; i++) {
+    const isWhite = Math.random() > 0.35;
+    orbs.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: 2 + Math.random() * 4,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: -0.15 - Math.random() * 0.25,
+      alpha: 0.05 + Math.random() * 0.15,
+      color: isWhite
+        ? `rgba(240, 230, 255, VAL)`
+        : `rgba(${Math.random() > 0.5 ? "255, 23, 68" : "124, 58, 237"}, VAL)`,
+      pulse: Math.random() * Math.PI * 2,
+      pulseSpeed: 0.008 + Math.random() * 0.012,
+    });
   }
 
-  const sheetsPayload = await sheetsResponse.json();
-  const randomPayload = await randomResponse.json();
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const orb of orbs) {
+      orb.x += orb.dx;
+      orb.y += orb.dy;
+      orb.pulse += orb.pulseSpeed;
 
-  if (sheetsFormulaEl) {
-    sheetsFormulaEl.textContent = sheetsPayload.importDataFormula;
+      if (orb.y < -20) { orb.y = canvas.height + 20; orb.x = Math.random() * canvas.width; }
+      if (orb.x < -20) orb.x = canvas.width + 20;
+      if (orb.x > canvas.width + 20) orb.x = -20;
+
+      const a = orb.alpha * (0.5 + 0.5 * Math.sin(orb.pulse));
+      const c = orb.color.replace("VAL", String(a));
+
+      ctx.beginPath();
+      ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
+      ctx.fillStyle = c;
+      ctx.fill();
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(orb.x, orb.y, orb.r * 3, 0, Math.PI * 2);
+      ctx.fillStyle = orb.color.replace("VAL", String(a * 0.15));
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ── Hero Waveform — real-time EMF-style oscilloscope ── */
+
+function initWaveform() {
+  const canvas = $("hero-waveform");
+  if (!canvas || !(canvas instanceof HTMLCanvasElement)) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  let phase = 0;
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  function draw() {
+    const w = canvas.width / (devicePixelRatio || 1);
+    const h = canvas.height / (devicePixelRatio || 1);
+    ctx.clearRect(0, 0, w, h);
+
+    phase += 0.015;
+
+    // Draw 3 waveforms — one for each sensor axis
+    const waves = [
+      { color: "rgba(255, 23, 68, 0.25)", freq: 0.008, amp: 0.2, speed: 1, offset: 0 },
+      { color: "rgba(124, 58, 237, 0.2)", freq: 0.012, amp: 0.15, speed: 1.3, offset: 2 },
+      { color: "rgba(0, 229, 255, 0.15)", freq: 0.006, amp: 0.25, speed: 0.7, offset: 4 },
+    ];
+
+    for (const wave of waves) {
+      ctx.beginPath();
+      ctx.strokeStyle = wave.color;
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = "round";
+
+      for (let x = 0; x <= w; x += 2) {
+        const noise = Math.sin(x * 0.05 + phase * 3) * 0.03;
+        const y = h * 0.5 +
+          Math.sin(x * wave.freq + phase * wave.speed + wave.offset) * h * wave.amp +
+          Math.sin(x * wave.freq * 2.7 + phase * wave.speed * 1.8) * h * wave.amp * 0.3 +
+          noise * h;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ── Scroll Reveal ── */
+
+function initScrollReveal() {
+  const sections = $$(".reveal-section");
+  if (!sections.length) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-revealed");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.08, rootMargin: "0px 0px -80px 0px" }
+  );
+
+  sections.forEach((s) => observer.observe(s));
+}
+
+/* ── Live Transmission Feed ── */
+
+const feedStreamEl = $("feed-stream");
+const feedEmptyEl = $("feed-empty");
+const feedTotalEl = $("feed-total");
+const feedStatusEl = $("feed-status");
+const feedFilterButtons = $$("[data-feed]");
+
+const feedState = {
+  latestAt: null,
+  filter: "all",
+  entries: [],
+  seenIds: new Set(),
+};
+
+function feedEntryId(entry) {
+  if (entry.type === "call") return `call:${entry.callSid}:${entry.turnNumber}`;
+  return `chat:${entry.sessionId}:${entry.createdAt}`;
+}
+
+function formatFeedTime(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const now = Date.now();
+  const diff = now - d.getTime();
+  if (diff < 60000) return "just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return d.toLocaleDateString();
+}
+
+function renderFeedEntry(entry) {
+  const div = document.createElement("div");
+  div.className = `feed-entry feed-entry-${entry.type}`;
+
+  const header = document.createElement("div");
+  header.className = "feed-entry-header";
+
+  const typeBadge = el("span", "feed-entry-type", entry.type === "call" ? "HOTLINE" : "CHAT");
+  const time = el("span", "feed-entry-time", formatFeedTime(entry.createdAt));
+  header.append(typeBadge, time);
+
+  const content = document.createElement("div");
+  content.className = "feed-entry-content";
+
+  if (entry.type === "call") {
+    const callerTurn = document.createElement("div");
+    callerTurn.className = "feed-turn";
+    const callerLabel = el("span", "feed-entry-speaker feed-entry-speaker-caller", "CALLER:");
+    callerTurn.append(callerLabel, document.createTextNode(" " + entry.transcript));
+    content.append(callerTurn);
+
+    if (entry.aiResponse) {
+      const signalTurn = document.createElement("div");
+      signalTurn.className = "feed-turn";
+      const signalLabel = el("span", "feed-entry-speaker feed-entry-speaker-signal", "SIGNAL:");
+      signalTurn.append(signalLabel, document.createTextNode(" " + entry.aiResponse));
+      content.append(signalTurn);
+    }
+  } else {
+    const label = entry.role === "user" ? "HUMAN" : "SIGNAL";
+    const cls = entry.role === "user" ? "feed-entry-speaker-human" : "feed-entry-speaker-signal";
+    const speaker = el("span", `feed-entry-speaker ${cls}`, `${label}:`);
+    content.append(speaker, document.createTextNode(" " + entry.content));
   }
 
-  if (randomNumberEl) {
-    randomNumberEl.textContent = randomPayload.randomNumber;
-  }
+  div.append(header, content);
+  return div;
+}
 
-  if (randomMetaEl) {
-    randomMetaEl.textContent =
-      `${randomPayload.sampleCount} stored rows contributed to this value across ${formatRangeLabel(randomPayload.start, randomPayload.end)}.`;
+function applyFeedFilter() {
+  if (!feedStreamEl) return;
+  const children = feedStreamEl.querySelectorAll(".feed-entry");
+  children.forEach((child) => {
+    if (feedState.filter === "all") {
+      child.style.display = "";
+    } else if (feedState.filter === "calls") {
+      child.style.display = child.classList.contains("feed-entry-call") ? "" : "none";
+    } else {
+      child.style.display = child.classList.contains("feed-entry-chat") ? "" : "none";
+    }
+  });
+}
+
+async function loadFeed(isPolling) {
+  if (!feedStreamEl) return;
+  try {
+    const params = new URLSearchParams({ limit: "30" });
+    if (isPolling && feedState.latestAt) params.set("since", feedState.latestAt);
+
+    const res = await fetch(`/api/v1/transmissions/live?${params}`, {
+      headers: { accept: "application/json" },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (feedTotalEl) feedTotalEl.textContent = String(data.total);
+    if (data.latestAt) feedState.latestAt = data.latestAt;
+
+    const newEntries = data.entries.filter((e) => !feedState.seenIds.has(feedEntryId(e)));
+
+    if (newEntries.length > 0) {
+      if (feedEmptyEl) feedEmptyEl.style.display = "none";
+
+      // Newest first — prepend to stream
+      for (const entry of newEntries.reverse()) {
+        const id = feedEntryId(entry);
+        feedState.seenIds.add(id);
+        const node = renderFeedEntry(entry);
+        feedStreamEl.prepend(node);
+      }
+
+      applyFeedFilter();
+
+      // Cap DOM entries
+      const allEntries = feedStreamEl.querySelectorAll(".feed-entry");
+      if (allEntries.length > 60) {
+        for (let i = 60; i < allEntries.length; i++) allEntries[i].remove();
+      }
+    }
+
+    if (feedStatusEl) feedStatusEl.textContent = "LIVE";
+  } catch {
+    if (feedStatusEl) feedStatusEl.textContent = "OFFLINE";
   }
 }
 
-function handleSnapshotUtilityError(error) {
-  if (sheetsFormulaEl) {
-    sheetsFormulaEl.textContent = "Snapshot export helpers are unavailable for this range.";
-  }
-  if (copySheetsStatusEl) {
-    copySheetsStatusEl.textContent = "Pick a range with stored D1 rows to generate export helpers.";
-  }
-  if (randomNumberEl) {
-    randomNumberEl.textContent = "--";
-  }
-  if (randomMetaEl) {
-    randomMetaEl.textContent = "No stored snapshot rows are available for the selected range.";
-  }
-  console.error(error);
-}
+/* ── Countdown ── */
 
 function updateCountdown() {
-  if (!countdownEl) {
-    return;
-  }
-
+  if (!countdownEl) return;
   const target = new Date("2028-11-07T00:00:00-05:00");
-  const remaining = target.getTime() - Date.now();
-
-  if (remaining <= 0) {
-    countdownEl.textContent = "Election Day has arrived.";
-    return;
-  }
-
-  const days = Math.floor(remaining / 86_400_000);
-  const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
-  const minutes = Math.floor((remaining % 3_600_000) / 60_000);
-  countdownEl.textContent = `${days}d ${hours}h ${minutes}m remaining`;
+  const rem = target.getTime() - Date.now();
+  if (rem <= 0) { countdownEl.textContent = "Election Day has arrived."; return; }
+  const d = Math.floor(rem / 86400000);
+  const h = Math.floor((rem % 86400000) / 3600000);
+  const m = Math.floor((rem % 3600000) / 60000);
+  countdownEl.textContent = `${d}d ${h}h ${m}m`;
 }
+
+/* ── Refresh ── */
 
 async function refreshAll() {
   try {
-    refreshPresetWindow();
+    refreshPreset();
     await Promise.all([loadCurrent(), loadHistory(), loadEntropy()]);
-    loadSnapshotUtilities().catch(handleSnapshotUtilityError);
-  } catch (error) {
-    if (currentStateEl) {
-      currentStateEl.textContent = "The public feed is not responding right now.";
-    }
-    if (chartMetaEl) {
-      chartMetaEl.textContent = "Unable to load the selected history range.";
-    }
-    console.error(error);
+    loadSnapshotUtils().catch(() => {});
+    loadTransmissionCount().catch(() => {});
+  } catch {
+    if (currentStateEl) currentStateEl.textContent = "Signal not responding.";
+    if (chartMetaEl) chartMetaEl.textContent = "Unable to load data.";
   }
 }
 
-window.addEventListener("resize", () => drawChart(appState.chartPoints));
+/* ── Event Listeners ── */
 
+window.addEventListener("resize", () => drawChart(state.chartPoints));
 updateCountdown();
-setInterval(updateCountdown, 60_000);
+setInterval(updateCountdown, 60000);
+initOrbs();
+initWaveform();
+initScrollReveal();
+initStorySlider();
+initAvatarSpread();
+initTimelineReveal();
 
 if (document.body.dataset.page === "home") {
   Promise.all([loadMeta(), loadTimeline()])
     .then(() => {
-      const initialRange = parseInitialRange();
-      setRange(initialRange.preset, { start: initialRange.start, end: initialRange.end });
+      const r = parseInitialRange();
+      setRange(r.preset, { start: r.start, end: r.end });
       return refreshAll();
     })
-    .catch((error) => {
-      if (currentStateEl) {
-        currentStateEl.textContent = "The public feed is not responding right now.";
-      }
-      console.error(error);
+    .catch((err) => {
+      if (currentStateEl) currentStateEl.textContent = "Signal not responding.";
+      console.error(err);
     });
 
-  rangeButtons.forEach((button) => {
-    button.addEventListener("click", async () => {
-      const preset = button.dataset.range;
-      if (!preset) {
-        return;
-      }
-
-      setRange(preset, getPresetRange(preset));
+  // Range presets
+  rangeButtons.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const p = btn.dataset.range;
+      if (!p) return;
+      setRange(p, getPresetRange(p));
       try {
         await Promise.all([loadHistory(), loadEntropy()]);
-        loadSnapshotUtilities().catch(handleSnapshotUtilityError);
-      } catch (error) {
-        if (chartMetaEl) {
-          chartMetaEl.textContent = "Unable to load the selected history range.";
-        }
-        console.error(error);
-      }
+        loadSnapshotUtils().catch(() => {});
+      } catch { if (chartMetaEl) chartMetaEl.textContent = "Unable to load range."; }
     });
   });
 
-  historyFormEl?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const start = parseInputDateTime(historyStartEl instanceof HTMLInputElement ? historyStartEl.value : "");
-    const end = parseInputDateTime(historyEndEl instanceof HTMLInputElement ? historyEndEl.value : "");
-
-    if (!start || !end || new Date(end).getTime() <= new Date(start).getTime()) {
-      if (chartMetaEl) {
-        chartMetaEl.textContent = "Choose a valid start time and a later end time before applying a custom range.";
-      }
+  // Custom range form
+  historyFormEl?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const s = parseDT(historyStartEl?.value), en = parseDT(historyEndEl?.value);
+    if (!s || !en || new Date(en) <= new Date(s)) {
+      if (chartMetaEl) chartMetaEl.textContent = "Choose a valid start and end time.";
       return;
     }
-
-    setRange("custom", { start, end });
+    setRange("custom", { start: s, end: en });
     try {
       await Promise.all([loadHistory(), loadEntropy()]);
-      loadSnapshotUtilities().catch(handleSnapshotUtilityError);
-    } catch (error) {
-      if (chartMetaEl) {
-        chartMetaEl.textContent = "Unable to load the selected history range.";
-      }
-      console.error(error);
-    }
+      loadSnapshotUtils().catch(() => {});
+    } catch { if (chartMetaEl) chartMetaEl.textContent = "Unable to load range."; }
   });
 
-  copySheetsFormulaButtonEl?.addEventListener("click", async () => {
-    const formula = sheetsFormulaEl?.textContent;
-    if (!formula) {
-      return;
-    }
+  // Copy buttons
+  copyRangeLinkEl?.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(location.href); } catch {}
+  });
 
+  copySheetsFormulaEl?.addEventListener("click", async () => {
+    const formula = sheetsFormulaEl?.textContent;
+    if (!formula) return;
     try {
       await navigator.clipboard.writeText(formula);
-      if (copySheetsStatusEl) {
-        copySheetsStatusEl.textContent = "Google Sheets formula copied.";
-      }
-    } catch (error) {
-      if (copySheetsStatusEl) {
-        copySheetsStatusEl.textContent = "Clipboard copy failed. Copy the formula manually.";
-      }
-      console.error(error);
+      if (copySheetsStatusEl) copySheetsStatusEl.textContent = "Copied.";
+    } catch {
+      if (copySheetsStatusEl) copySheetsStatusEl.textContent = "Copy failed.";
     }
   });
 
-  copyRangeLinkButtonEl?.addEventListener("click", async () => {
+  // Timeline: vertical, all events visible — no keyboard nav needed
+
+  // Chat widget
+  chatToggleEl?.addEventListener("click", () => toggleChat());
+  chatCloseEl?.addEventListener("click", () => toggleChat(false));
+  openChatEl?.addEventListener("click", () => toggleChat(true));
+  document.querySelectorAll('[data-action="open-chat"]').forEach((el) =>
+    el.addEventListener("click", () => toggleChat(true))
+  );
+
+  chatFormEl?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const msg = chatInputEl?.value?.trim();
+    if (!msg) return;
+    chatInputEl.value = "";
+    sendChatMessage(msg);
+  });
+
+  // Close chat on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.chatOpen) toggleChat(false);
+  });
+
+  // Scroll-triggered dossier cards and emo ducks
+  const dossierObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          dossierObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
+  );
+  $$(".dossier-card").forEach((card) => dossierObserver.observe(card));
+
+  const duckObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        entry.target.querySelectorAll(".emo-duck").forEach((duck) => {
+          duck.classList.toggle("is-peeking", entry.isIntersecting);
+        });
+      });
+    },
+    { threshold: 0.3 }
+  );
+  $$(".duck-row").forEach((row) => duckObserver.observe(row));
+
+  // MUD terminal — xterm.js + WebSocket-to-TCP proxy (lazy-connect on scroll)
+  const mudXtermEl = $("mud-xterm");
+  const mudStatusEl = $("mud-status");
+  const mudStatusDot = $("mud-status-dot");
+  if (mudXtermEl && window.Terminal) {
+    const term = new window.Terminal({
+      cursorBlink: true,
+      cursorStyle: "underline",
+      fontFamily: "'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace",
+      fontSize: 13,
+      lineHeight: 1.25,
+      rows: 28,
+      cols: 80,
+      scrollback: 2000,
+      allowTransparency: true,
+      theme: {
+        background: "rgba(6, 6, 16, 0)",
+        foreground: "#c8ffd4",
+        cursor: "#FF1744",
+        cursorAccent: "#060610",
+        selectionBackground: "rgba(255, 23, 68, 0.25)",
+        selectionForeground: "#ffffff",
+        black: "#0a0a1a",
+        red: "#ff1744",
+        green: "#7affae",
+        yellow: "#ffd740",
+        blue: "#50aae3",
+        magenta: "#7c3aed",
+        cyan: "#00e5ff",
+        white: "#e0e0e0",
+        brightBlack: "#4a4a6a",
+        brightRed: "#ff5252",
+        brightGreen: "#b9f6ca",
+        brightYellow: "#ffe57f",
+        brightBlue: "#82ccff",
+        brightMagenta: "#b388ff",
+        brightCyan: "#84ffff",
+        brightWhite: "#ffffff",
+      },
+    });
+
+    function setMudStatus(status, dotClass) {
+      if (mudStatusEl) mudStatusEl.textContent = status;
+      if (mudStatusDot) mudStatusDot.className = "mud-status-dot " + dotClass;
+    }
+
+    let ws = null;
+    let mudConnected = false;
+
+    function connectMud() {
+      if (mudConnected) return;
+      mudConnected = true;
+      term.open(mudXtermEl);
+      setMudStatus("Connecting", "mud-dot-pulse");
+
+      const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+      ws = new WebSocket(`${protocol}//${location.host}/ws/mud`);
+      ws.binaryType = "arraybuffer";
+
+      ws.addEventListener("open", () => {
+        setMudStatus("Connected", "mud-dot-live");
+      });
+
+      ws.addEventListener("message", (e) => {
+        const text = typeof e.data === "string" ? e.data : new TextDecoder().decode(e.data);
+        term.write(text);
+      });
+
+      ws.addEventListener("close", () => {
+        setMudStatus("Disconnected", "mud-dot-dead");
+        term.write("\r\n\x1b[2m--- Connection closed. Refresh to reconnect. ---\x1b[0m\r\n");
+      });
+
+      ws.addEventListener("error", () => {
+        setMudStatus("Error", "mud-dot-dead");
+      });
+
+      term.onData((data) => {
+        if (ws && ws.readyState === WebSocket.OPEN) ws.send(data);
+      });
+
+      // Ensure clicking anywhere on the terminal container focuses xterm
+      mudXtermEl.addEventListener("click", () => term.focus());
+      mudXtermEl.style.cursor = "text";
+    }
+
+    // Lazy-connect: only open TCP when terminal scrolls into view
+    const mudObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          connectMud();
+          mudObserver.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    mudObserver.observe(mudXtermEl);
+  }
+
+  // Newsletter form
+  const newsletterForm = $("newsletter-form");
+  const newsletterEmail = $("newsletter-email");
+  const newsletterStatus = $("newsletter-status");
+  newsletterForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = newsletterEmail?.value?.trim();
+    if (!email) return;
+    newsletterStatus.textContent = "Subscribing...";
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      if (copyRangeStatusEl) {
-        copyRangeStatusEl.textContent = "Shareable range link copied.";
+      const res = await fetch("/api/v1/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        newsletterStatus.textContent = "Subscribed. The signal will find you.";
+        newsletterEmail.value = "";
+      } else {
+        const data = await res.json().catch(() => ({}));
+        newsletterStatus.textContent = data.error || "Something went wrong. Try again.";
       }
-    } catch (error) {
-      if (copyRangeStatusEl) {
-        copyRangeStatusEl.textContent = "Clipboard copy failed. Copy the URL manually.";
-      }
-      console.error(error);
+    } catch {
+      newsletterStatus.textContent = "Network error. The signal is disrupted.";
     }
   });
 
+  // Feed
+  loadFeed(false).catch(() => {});
+  feedFilterButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      feedState.filter = btn.dataset.feed;
+      feedFilterButtons.forEach((b) => b.classList.toggle("is-active", b === btn));
+      applyFeedFilter();
+    });
+  });
+  setInterval(() => loadFeed(true).catch(() => {}), 5000);
+
+  // Auto-refresh
+  setInterval(() => loadCurrent().catch(() => {}), 2000);
   setInterval(() => {
-    loadCurrent().catch(console.error);
-  }, 3_000);
+    refreshPreset();
+    loadHistory().catch(() => {});
+    loadEntropy().catch(() => {});
+    loadSnapshotUtils().catch(() => {});
+  }, 10000);
+  setInterval(() => loadTransmissionCount().catch(() => {}), 30000);
+
+  // Signal age update
   setInterval(() => {
-    refreshPresetWindow();
-    loadHistory().catch(console.error);
-    loadEntropy().catch(console.error);
-    loadSnapshotUtilities().catch(console.error);
-  }, 15_000);
+    if (state.meta?.earliestKnownAt) {
+      const age = formatAge(state.meta.earliestKnownAt);
+      if (signalAgeEl) signalAgeEl.textContent = age;
+      if (teleAgeEl) teleAgeEl.textContent = age;
+    }
+  }, 60000);
 }

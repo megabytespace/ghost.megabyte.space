@@ -11,6 +11,3 @@ dist/
 playwright-report/
 test-results/
 .claude/settings.local.json
-.dev.vars
-.wrangler
-node_modules

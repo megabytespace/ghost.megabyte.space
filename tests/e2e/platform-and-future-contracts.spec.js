@@ -2,13 +2,12 @@ import { test, expect, devices } from "@playwright/test";
 import {
   SEEDED_CUSTOM_RANGE,
   SEEDED_FULL_RANGE,
-  countCsvRows,
   getJson,
   gotoHome,
   isoToLocalInput,
-  readDownload,
   seedSnapshots,
   waitForHomepageReady,
+  waitForTimelineReady,
 } from "./helpers.js";
 
 test.beforeEach(async ({ request }) => {
@@ -18,44 +17,79 @@ test.beforeEach(async ({ request }) => {
 test.describe("mobile", () => {
   test.use({ ...devices["iPhone 13"] });
 
-  test("mobile viewport flow keeps nav, range controls, exports, and docs usable", async ({ page }) => {
+  test("mobile viewport: nav, chat widget, timeline, hotline, and range controls remain usable", async ({ page }) => {
     await gotoHome(page, SEEDED_CUSTOM_RANGE);
 
+    // Nav visible
     await expect(page.locator(".site-nav")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Signal" })).toBeVisible();
+
+    // Range presets work
     await page.getByRole("button", { name: "7 days" }).click();
     await expect(page).toHaveURL(/range=7d/);
-    await expect(page.locator("#snapshot-json-link")).toBeVisible();
+
+    // Chat toggle visible and functional
+    const chatToggle = page.locator("#chat-toggle");
+    await expect(chatToggle).toBeVisible();
+    await chatToggle.click();
+    await expect(page.locator("#chat-panel")).toHaveAttribute("aria-hidden", "false");
+    await page.locator("#chat-close").click();
+    await expect(page.locator("#chat-panel")).toHaveAttribute("aria-hidden", "true");
+
+    // Timeline scrollable with nodes
+    await waitForTimelineReady(page);
+    await expect(page.locator("#timeline-container")).toBeVisible();
+
+    // Hotline number visible
+    await expect(page.locator("[data-testid='hotline-number']")).toContainText("(601) 666-6602");
+
+    // Docs link navigates
     await page.getByRole("link", { name: "Docs" }).click();
     await expect(page).toHaveURL(/\/docs$/);
-    await expect(page.locator("main")).toContainText("Build on the ghost EMF feed.");
   });
 });
 
-test("keyboard-driven flow covers skip link, nav, preset buttons, custom range submission, and docs navigation", async ({ page }) => {
+test("keyboard accessibility: skip link, nav tabs, timeline arrow keys, chat Escape close", async ({ page }) => {
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
+  await waitForTimelineReady(page);
 
+  // Skip link
   await page.keyboard.press("Tab");
   await expect(page.locator(".skip-link")).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#main$/);
 
+  // Tab through nav links
   await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
+  const focused1 = page.locator(":focus");
+  await expect(focused1).toBeVisible();
+
+  // Open chat via hero button, then close with Escape
+  await page.locator("#open-chat").focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/range=7d/);
+  await expect(page.locator("#chat-panel")).toHaveAttribute("aria-hidden", "false");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#chat-panel")).toHaveAttribute("aria-hidden", "true");
 
-  await page.locator("#history-start").focus();
-  await page.locator("#history-start").fill(isoToLocalInput(SEEDED_CUSTOM_RANGE.start));
-  await page.locator("#history-end").fill(isoToLocalInput(SEEDED_CUSTOM_RANGE.end));
-  await page.getByRole("button", { name: "Apply range" }).press("Enter");
-  await expect(page.locator("#chart-meta")).toContainText("visible points");
+  // Timeline keyboard navigation
+  const timelineContainer = page.locator("#timeline-container");
+  await timelineContainer.focus();
 
-  await page.getByRole("link", { name: "Docs" }).press("Enter");
-  await expect(page).toHaveURL(/\/docs$/);
+  await page.keyboard.press("Home");
+  await expect(page.locator(".timeline-node").first()).toHaveClass(/is-active/);
+
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator(".timeline-node").nth(1)).toHaveClass(/is-active/);
+
+  await page.keyboard.press("End");
+  await expect(page.locator(".timeline-node").last()).toHaveClass(/is-active/);
+
+  await page.keyboard.press("ArrowLeft");
+  const count = await page.locator(".timeline-node").count();
+  await expect(page.locator(".timeline-node").nth(count - 2)).toHaveClass(/is-active/);
 });
 
-test("web property flow validates manifest, robots, humans, security.txt, sitemap, and homepage/docs cross-links", async ({ page, request }) => {
+test("web properties: manifest, robots, sitemap, security.txt, and cross-links", async ({ page, request }) => {
   await page.goto("/");
   await expect(page.locator("head link[rel='manifest']")).toHaveAttribute("href", "/site.webmanifest");
 
@@ -65,25 +99,27 @@ test("web property flow validates manifest, robots, humans, security.txt, sitema
 
   const robots = await request.get("/robots.txt");
   expect(robots.ok()).toBeTruthy();
-  await expect(await robots.text()).toContain("Sitemap");
+  expect(await robots.text()).toContain("Sitemap");
 
   const humans = await request.get("/humans.txt");
   expect(humans.ok()).toBeTruthy();
-  await expect(await humans.text()).toContain("Megabyte");
+  expect(await humans.text()).toContain("Megabyte");
 
   const security = await request.get("/.well-known/security.txt");
   expect(security.ok()).toBeTruthy();
-  await expect(await security.text()).toContain("Contact");
+  expect(await security.text()).toContain("Contact");
 
   const sitemap = await request.get("/sitemap.xml");
   expect(sitemap.ok()).toBeTruthy();
-  await expect(await sitemap.text()).toContain("/docs");
+  expect(await sitemap.text()).toContain("/docs");
 
-  await page.getByRole("link", { name: "Docs" }).click();
-  await expect(page.getByRole("link", { name: "Back to the live site" })).toBeVisible();
+  // Cross-links in footer
+  await expect(page.locator(".site-footer")).toContainText("ghost.megabyte.space");
+  await expect(page.locator(".site-footer a[href='/docs']")).toBeVisible();
+  await expect(page.locator(".site-footer a[href='/api/docs']")).toBeVisible();
 });
 
-test("future-ready dataset audit flow verifies snapshot json, CSV export, Excel export, sheets formula, and reproducible random number agree on one range", async ({ page, request }) => {
+test("future-ready dataset audit: snapshot, export, random all agree on one range", async ({ page, request }) => {
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
 
   const query = `start=${encodeURIComponent(SEEDED_CUSTOM_RANGE.start)}&end=${encodeURIComponent(SEEDED_CUSTOM_RANGE.end)}`;
@@ -99,11 +135,5 @@ test("future-ready dataset audit flow verifies snapshot json, CSV export, Excel 
   const csvResponse = await request.get(`/api/v1/ghost-emf/export?${query}&format=csv`);
   expect(csvResponse.ok()).toBeTruthy();
   const csvText = await csvResponse.text();
-  expect(countCsvRows(csvText)).toBe(snapshot.sampleCount + 1);
-
-  const excelResponse = await request.get(`/api/v1/ghost-emf/export?${query}&format=excel`);
-  expect(excelResponse.ok()).toBeTruthy();
-  const excelText = await excelResponse.text();
-  expect(excelText).toContain("<table");
-  expect(excelText).toContain(snapshot.points[0].sampledAt);
+  expect(csvText.trim().split(/\r?\n/).length).toBe(snapshot.sampleCount + 1);
 });

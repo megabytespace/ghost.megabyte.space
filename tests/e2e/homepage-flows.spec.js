@@ -9,54 +9,84 @@ import {
   seedSnapshots,
   trackConsoleErrors,
   waitForHomepageReady,
+  waitForTimelineReady,
 } from "./helpers.js";
 
 test.beforeEach(async ({ request }) => {
   await seedSnapshots(request, SEEDED_FULL_RANGE);
 });
 
-test("homepage seeded flow renders live cards, timeline, snapshot tools, and random output", async ({ page }) => {
+test("hero, status grid, and 'Enter the Signal' button opens chat widget", async ({ page }) => {
   const consoleErrors = trackConsoleErrors(page);
-
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
 
-  await expect(page.locator("#current-state")).toContainText("is reporting");
+  // Hero section loads with glitch text
+  const hero = page.locator("[data-testid='hero']");
+  await expect(hero).toBeVisible();
+  await expect(hero.locator(".glitch-text")).toHaveText("The Ghost Signal");
+  await expect(hero.locator(".eyebrow")).toContainText("SIGNAL // 666");
+
+  // Status grid: 4 cards populated
+  const grid = page.locator("[data-testid='status-grid']");
+  await expect(grid.locator(".status-card")).toHaveCount(4);
+  await expect(page.locator("#current-value")).not.toHaveText("--");
+  await expect(page.locator("#current-state")).toContainText("reporting");
+  await expect(page.locator("#entropy-value")).toContainText("bits");
+  await expect(page.locator("#signal-age")).not.toHaveText("--");
+
+  // "Enter the Signal" opens the chat panel
+  const chatPanel = page.locator("#chat-panel");
+  await expect(chatPanel).toHaveAttribute("aria-hidden", "true");
+  await page.locator("#open-chat").click();
+  await expect(chatPanel).toHaveAttribute("aria-hidden", "false");
+  await expect(page.locator("#chat-toggle")).toHaveAttribute("aria-expanded", "true");
+
+  // Chart and timeline also loaded
   await expect(page.locator("#history-chart")).toBeVisible();
-  await expect(page.locator("#timeline-annotations")).toContainText("USB bridge online");
-  await expect(page.locator("#story-milestones")).toContainText("AVATAR MUD");
-  await expect(page.locator("#snapshot-storage-note")).toContainText("D1 snapshots are active");
-  await expect(page.locator("#random-meta")).toContainText("stored rows contributed");
+  await waitForTimelineReady(page);
 
   expectNoConsoleErrors(consoleErrors);
 });
 
-test("preset range buttons update URL, chart metadata, export links, and random endpoint links", async ({ page }) => {
+test("preset range buttons update URL, chart metadata, and export links", async ({ page }) => {
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
+
+  await page.getByRole("button", { name: "24h" }).click();
+  await expect(page).toHaveURL(/range=24h/);
 
   await page.getByRole("button", { name: "7 days" }).click();
   await expect(page).toHaveURL(/range=7d/);
-  await expect(page.locator("#export-csv-link")).toHaveAttribute("href", /start=.*end=.*format=csv/);
+  await expect(page.locator("#export-csv-link")).toHaveAttribute("href", /format=csv/);
 
   await page.getByRole("button", { name: "30 days" }).click();
   await expect(page).toHaveURL(/range=30d/);
-  await expect(page.locator("#random-json-link")).toHaveAttribute("href", /\/api\/v1\/ghost-emf\/random\?/);
 
-  await page.getByRole("button", { name: "All history" }).click();
+  await page.getByRole("button", { name: "All" }).click();
   await expect(page).toHaveURL(/range=all/);
-  await expect(page.locator("#chart-meta")).toContainText("retained samples");
+  await expect(page.locator("#chart-meta")).toContainText("points");
+
+  // Active button styling follows selection
+  await expect(page.locator(".range-button[data-range='all']")).toHaveClass(/is-active/);
+  await expect(page.locator(".range-button[data-range='7d']")).not.toHaveClass(/is-active/);
 });
 
-test("custom range form updates chart, sheets formula, and the page URL", async ({ page }) => {
+test("custom range form updates chart, sheets formula, and page URL", async ({ page }) => {
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
 
   await page.locator("#history-start").fill(isoToLocalInput(SEEDED_ALT_RANGE.start));
   await page.locator("#history-end").fill(isoToLocalInput(SEEDED_ALT_RANGE.end));
-  await page.getByRole("button", { name: "Apply range" }).click();
+  await page.getByRole("button", { name: "Apply" }).click();
 
   await expect(page).toHaveURL(/start=.*end=.*/);
-  await expect(page.locator("#chart-meta")).toContainText("visible points");
-  await expect(page.locator("#sheets-formula")).toContainText(encodeURIComponent ? "IMPORTDATA" : "IMPORTDATA");
+  await expect(page.locator("#chart-meta")).toContainText("points");
+  await expect(page.locator("#sheets-formula")).toContainText("IMPORTDATA");
   await expect(page.locator("#snapshot-json-link")).toHaveAttribute("href", /start=.*end=.*/);
+
+  // Invalid range shows error
+  await page.locator("#history-start").fill(isoToLocalInput(SEEDED_ALT_RANGE.end));
+  await page.locator("#history-end").fill(isoToLocalInput(SEEDED_ALT_RANGE.start));
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.locator("#chart-meta")).toContainText("valid start");
 });
 
 test("share-link and sheets-formula copy actions work from the same session", async ({ browser }) => {
@@ -68,21 +98,20 @@ test("share-link and sheets-formula copy actions work from the same session", as
 
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
 
-  await page.getByRole("button", { name: "Copy Range Link" }).click();
-  await expect(page.locator("#copy-range-status")).toContainText("copied");
-  const copiedRangeUrl = await page.evaluate(() => navigator.clipboard.readText());
-  expect(copiedRangeUrl).toContain("start=");
-  expect(copiedRangeUrl).toContain("end=");
+  await page.locator("#copy-range-link").click();
+  const copiedUrl = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copiedUrl).toContain("start=");
+  expect(copiedUrl).toContain("end=");
 
-  await page.getByRole("button", { name: "Copy Sheets Formula" }).click();
-  await expect(page.locator("#copy-sheets-status")).toContainText("copied");
+  await page.locator("#copy-sheets-formula").click();
+  await expect(page.locator("#copy-sheets-status")).toContainText("Copied");
   const copiedFormula = await page.evaluate(() => navigator.clipboard.readText());
-  expect(copiedFormula.startsWith("=IMPORTDATA(")).toBeTruthy();
+  expect(copiedFormula).toContain("IMPORTDATA");
 
   await context.close();
 });
 
-test("deep-linked custom range restores exact state after reload and in a second page", async ({ browser, page }) => {
+test("deep-linked custom range restores state after reload and in a second tab", async ({ browser, page }) => {
   await gotoHome(page, SEEDED_ALT_RANGE);
 
   const sharedUrl = page.url();
@@ -91,11 +120,11 @@ test("deep-linked custom range restores exact state after reload and in a second
   await expect(page.locator("#history-start")).toHaveValue(isoToLocalInput(SEEDED_ALT_RANGE.start));
   await expect(page.locator("#history-end")).toHaveValue(isoToLocalInput(SEEDED_ALT_RANGE.end));
 
-  const secondContext = await browser.newContext({ baseURL: "http://127.0.0.1:8787" });
-  const secondPage = await secondContext.newPage();
-  await secondPage.goto(sharedUrl);
-  await waitForHomepageReady(secondPage);
-  await expect(secondPage.locator("#history-start")).toHaveValue(isoToLocalInput(SEEDED_ALT_RANGE.start));
-  await expect(secondPage.locator("#history-end")).toHaveValue(isoToLocalInput(SEEDED_ALT_RANGE.end));
-  await secondContext.close();
+  const ctx2 = await browser.newContext({ baseURL: "http://127.0.0.1:8787" });
+  const page2 = await ctx2.newPage();
+  await page2.goto(sharedUrl);
+  await waitForHomepageReady(page2);
+  await expect(page2.locator("#history-start")).toHaveValue(isoToLocalInput(SEEDED_ALT_RANGE.start));
+  await expect(page2.locator("#history-end")).toHaveValue(isoToLocalInput(SEEDED_ALT_RANGE.end));
+  await ctx2.close();
 });

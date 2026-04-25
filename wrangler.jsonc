@@ -13,12 +13,14 @@
   "d1_databases": [
     {
       "binding": "EMF_DB",
-      "database_name": "ghost-megabyte-space-emf"
+      "database_name": "ghost-megabyte-space-emf",
+      "database_id": "635f5d6a-cf75-40bb-8826-40c4ac0b7f6e"
     }
   ],
   "kv_namespaces": [
     {
-      "binding": "RATE_LIMIT_KV"
+      "binding": "RATE_LIMIT_KV",
+      "id": "f6d3c1a029cc43e999c782dbdc7be286"
     }
   ],
   "routes": [
@@ -30,13 +32,18 @@
   "triggers": {
     "crons": ["*/1 * * * *"]
   },
+  "rules": [
+    { "type": "Text", "globs": ["**/*.yaml"] }
+  ],
   "vars": {
     "SITE_NAME": "ghost.megabyte.space",
     "SITE_URL": "https://ghost.megabyte.space",
     "EMF_SENSOR_NAME": "Ghost EMF",
     "EMF_SENSOR_ENTITY_ID": "sensor.gq_emf390_emf_mg",
+    "EF_SENSOR_ENTITY_ID": "sensor.gq_emf390_ef_v_m",
+    "RF_SENSOR_ENTITY_ID": "sensor.gq_emf390_rf_total_density_mw_m2",
     "EMF_SENSOR_STARTED_AT": "2026-04-03T02:47:58.394637+00:00",
-    "CURRENT_CACHE_TTL_SECONDS": "3",
+    "CURRENT_CACHE_TTL_SECONDS": "2",
     "HISTORY_CACHE_TTL_SECONDS": "15",
     "ENTROPY_CACHE_TTL_SECONDS": "15",
     "PUBLIC_API_RATE_LIMIT_PER_MINUTE": "60"

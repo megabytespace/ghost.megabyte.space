@@ -3,207 +3,387 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ghost.megabyte.space Docs</title>
+    <title>API Docs — The Ghost Signal</title>
     <meta
       name="description"
-      content="Developer documentation for the public ghost EMF API: endpoints, examples, caching, rate limits, timeline metadata, and integration notes."
+      content="Developer docs for the Ghost Signal API. EMF, EF, RF endpoints, entropy, live transmissions, chat, newsletter, and reproducible random numbers."
     />
-    <meta property="og:title" content="ghost.megabyte.space Docs" />
+    <meta property="og:title" content="API Docs — The Ghost Signal" />
     <meta
       property="og:description"
-      content="Developer docs for the public ghost EMF API, including snapshot exports, Google Sheets import, and reproducible random numbers."
+      content="Developer docs for the Ghost Signal API. EMF sensor data, entropy, live transmissions, and derived random numbers."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ghost.megabyte.space/docs" />
-    <meta property="og:image" content="https://ghost.megabyte.space/logo-mark.svg" />
+    <meta property="og:image" content="https://ghost.megabyte.space/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <link rel="canonical" href="https://ghost.megabyte.space/docs" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#060610" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "APIReference",
-        "name": "ghost.megabyte.space API Docs",
+        "name": "Ghost Signal API",
         "url": "https://ghost.megabyte.space/docs",
-        "description": "Developer documentation for the public ghost EMF API, including snapshots, exports, Google Sheets helpers, and derived random numbers."
+        "description": "Public API for real-time EMF, EF, and RF sensor data, entropy analysis, live transmission feeds, AI chat, and reproducible random numbers derived from electromagnetic phenomena."
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Ghost Signal API Documentation",
+        "url": "https://ghost.megabyte.space/docs",
+        "description": "Developer documentation for the Ghost Signal public API.",
+        "publisher": { "@type": "Organization", "name": "ghost.megabyte.space" }
       }
     </script>
   </head>
   <body data-page="docs">
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="noise"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+    <canvas class="orb-canvas" id="orb-canvas" aria-hidden="true"></canvas>
+
     <header class="site-header">
       <div class="brand-lockup">
-        <img class="brand-logo" src="/logo-mark.svg" alt="" width="40" height="40" />
-        <div class="brand-mark">GHOST // EMF</div>
+        <img class="brand-logo" src="/logo-b.png" alt="Ghost Signal logo" width="40" height="40" />
+        <div class="brand-mark">GHOST // SIGNAL</div>
       </div>
       <nav class="site-nav" aria-label="Primary">
-        <a href="/">Overview</a>
+        <a href="/">Signal</a>
+        <a href="/transmissions">Transmissions</a>
         <a href="/docs" aria-current="page">Docs</a>
-        <a href="/api/docs">OpenAPI</a>
+        <a href="/api/docs">API</a>
+        <a href="tel:+16016666602" class="nav-hotline">666</a>
       </nav>
     </header>
 
     <main id="main" class="shell docs-layout">
       <section class="docs-hero panel">
         <p class="eyebrow">Developer docs</p>
-        <h1>Build on the ghost EMF feed.</h1>
+        <h1 class="glitch-text" data-text="Build on the Ghost Signal."><span class="gradient-text">Build on the Ghost Signal.</span></h1>
         <p class="lede">
-          The API is public, read-only, edge-cached, and designed for polling. Use the current endpoint for live
-          reads, history for graphs and replay, the entropy endpoint for derived metrics, timeline metadata for
-          annotated browsing, and D1-backed snapshots for export and reproducible random numbers.
+          Public, read-only, edge-cached API. Three sensor axes (EMF, EF, RF), live transmission feed,
+          entropy analysis, AI chat, newsletter, and reproducible random numbers derived from electromagnetic phenomena.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="/api/docs">Open Swagger UI</a>
-          <a class="button button-secondary" href="/api/v1/openapi.json">Download OpenAPI JSON</a>
+          <a class="button button-secondary" href="/api/v1/openapi.json">OpenAPI JSON</a>
+          <a class="button button-ghost" href="#endpoints">Endpoints</a>
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel docs-base-url">
         <p class="eyebrow">Base URL</p>
-        <pre><code>https://ghost.megabyte.space</code></pre>
+        <pre class="docs-url-block"><code>https://ghost.megabyte.space</code></pre>
+        <div class="docs-sensor-grid">
+          <div class="docs-sensor-chip docs-sensor-emf">
+            <span class="docs-sensor-dot"></span>
+            <span class="docs-sensor-label">EMF</span>
+            <code>sensor.gq_emf390_emf_mg</code>
+          </div>
+          <div class="docs-sensor-chip docs-sensor-ef">
+            <span class="docs-sensor-dot"></span>
+            <span class="docs-sensor-label">EF</span>
+            <code>sensor.gq_emf390_ef_v_m</code>
+          </div>
+          <div class="docs-sensor-chip docs-sensor-rf">
+            <span class="docs-sensor-dot"></span>
+            <span class="docs-sensor-label">RF</span>
+            <code>sensor.gq_emf390_rf_total_density_mw_m2</code>
+          </div>
+        </div>
         <p class="card-note">
-          Public source entity: <code>sensor.gq_emf390_emf_mg</code>. Earliest known retained reading:
-          <code>2026-04-03T02:47:58.394637+00:00</code>.
-        </p>
-        <p class="card-note">
-          Cron storage: the Worker’s scheduled trigger stores one D1 snapshot per minute whenever <code>EMF_DB</code>
-          is bound.
+          GQ EMF-390 tri-axis meter. Cron storage: one D1 snapshot per minute per sensor.
+          Earliest retained reading: <code>2026-04-03T02:47:58.394637+00:00</code>.
         </p>
       </section>
 
-      <section class="docs-grid">
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/current</h2>
-          <p>Current normalized sensor reading. Best endpoint for polling.</p>
-          <pre><code>{
+      <hr class="section-divider" aria-hidden="true" />
+
+      <section id="endpoints">
+        <div class="panel-copy shell" style="margin-bottom: 1.5rem;">
+          <p class="eyebrow">Endpoints</p>
+          <h2><span class="gradient-text">Sensor Data</span></h2>
+        </div>
+
+        <div class="docs-grid shell">
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/sensors</h2>
+            </div>
+            <p>All three sensor readings in one request. Best for dashboards showing EMF, EF, and RF together.</p>
+            <pre><code>{
+  "emf": {
+    "entityId": "sensor.gq_emf390_emf_mg",
+    "numericValue": 0.8,
+    "unit": "mG",
+    "friendlyName": "EMF Milligauss",
+    "sampledAt": "2026-04-23T22:00:00.000Z"
+  },
+  "ef": { "numericValue": 2.1, "unit": "V/m", ... },
+  "rf": { "numericValue": 0.003, "unit": "mW/m²", ... },
+  "sampledAt": "2026-04-23T22:00:00.000Z"
+}</code></pre>
+          </article>
+
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/current</h2>
+            </div>
+            <p>Single EMF sensor reading. Best endpoint for simple polling.</p>
+            <pre><code>{
   "entityId": "sensor.gq_emf390_emf_mg",
   "numericValue": 0.8,
   "unit": "mG",
   "sampledAt": "2026-04-23T22:00:00.000Z"
 }</code></pre>
-        </article>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/history?start=...&amp;end=...&amp;targetPoints=960</h2>
-          <p>Time-series points for charts and replay views, from quick windows to explicit ranges.</p>
-          <pre><code>{
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/history</h2>
+            </div>
+            <p>Time-series points for charts. Supports <code>start</code>, <code>end</code>, <code>targetPoints</code> params.</p>
+            <pre><code>{
   "entityId": "sensor.gq_emf390_emf_mg",
-  "start": "2026-04-03T02:47:58.394Z",
-  "end": "2026-04-23T23:00:00.000Z",
   "rawPointCount": 15421,
   "displayPointCount": 960,
   "points": [
     { "timestamp": "2026-04-23T21:10:00.000Z", "value": 0.38 }
   ]
 }</code></pre>
-        </article>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/entropy?start=...&amp;end=...&amp;bins=24</h2>
-          <p>Shannon entropy summary derived from the selected window or explicit range.</p>
-          <pre><code>{
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/entropy</h2>
+            </div>
+            <p>Shannon entropy derived from sensor readings. Params: <code>start</code>, <code>end</code>, <code>bins</code>.</p>
+            <pre><code>{
   "entropyBits": 3.271447,
   "sampleCount": 960,
   "windowMinutes": 29832,
   "bins": 24
 }</code></pre>
-        </article>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/meta</h2>
-          <p>Public metadata for the single exposed sensor feed.</p>
-          <pre><code>{
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/meta</h2>
+            </div>
+            <p>Public metadata: history mode, earliest reading timestamp, recommended polling interval.</p>
+            <pre><code>{
   "historyMode": "d1",
   "earliestKnownAt": "2026-04-03T02:47:58.394637+00:00",
-  "polling": {
-    "recommendedIntervalMs": 3000
-  }
+  "polling": { "recommendedIntervalMs": 3000 }
 }</code></pre>
-        </article>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/timeline</h2>
-          <p>Technical annotations, story milestones, and safety guidance for timeline browsing.</p>
-          <pre><code>{
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/timeline</h2>
+            </div>
+            <p>Annotated events, story milestones, and safety guidance for timeline browsing.</p>
+            <pre><code>{
   "annotations": [
-    {
-      "title": "USB bridge online",
-      "subtitle": "The GQ EMF390 feed became readable in Home Assistant."
-    }
+    { "title": "USB bridge online", "subtitle": "..." }
   ],
+  "events": [ { "title": "...", "date": "...", "body": "..." } ],
   "safetyNote": "Do not use this dataset to rationalize cruelty."
 }</code></pre>
-        </article>
+          </article>
+        </div>
+      </section>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/snapshot?start=...&amp;end=...</h2>
-          <p>Raw D1 snapshot rows for a selected range. Best endpoint for full exports and audits.</p>
-          <pre><code>{
+      <section>
+        <div class="panel-copy shell" style="margin-bottom: 1.5rem; margin-top: 2rem;">
+          <p class="eyebrow">Endpoints</p>
+          <h2><span class="gradient-text">Exports &amp; Derived Data</span></h2>
+        </div>
+
+        <div class="docs-grid shell">
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/snapshot</h2>
+            </div>
+            <p>Raw D1 snapshot rows. Best for full exports and audits. Params: <code>start</code>, <code>end</code>.</p>
+            <pre><code>{
   "storage": "d1",
   "sampleCount": 1440,
   "points": [
-    {
-      "sampledAt": "2026-04-23T21:10:00.000Z",
-      "numericValue": 0.38
-    }
+    { "sampledAt": "...", "numericValue": 0.38 }
   ]
 }</code></pre>
-        </article>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/export?start=...&amp;end=...&amp;format=csv</h2>
-          <p>Attachment download for the selected snapshot range as CSV or Excel-compatible <code>.xls</code>.</p>
-          <pre><code>curl -L -o ghost-emf.csv \
-  "https://ghost.megabyte.space/api/v1/ghost-emf/export?start=2026-04-03T02:47:58.394Z&amp;end=2026-04-23T23:00:00.000Z&amp;format=csv"</code></pre>
-        </article>
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/export</h2>
+            </div>
+            <p>Download as <code>csv</code> or <code>excel</code>. Returns attachment with Content-Disposition header.</p>
+            <pre><code>curl -L -o ghost-emf.csv \
+  "https://ghost.megabyte.space/api/v1/ghost-emf/export?format=csv"</code></pre>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/google-sheets?start=...&amp;end=...</h2>
-          <p>Returns an <code>IMPORTDATA()</code> formula and the underlying CSV URL for Google Sheets.</p>
-          <pre><code>{
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/google-sheets</h2>
+            </div>
+            <p>Returns an <code>IMPORTDATA()</code> formula and CSV URL for Google Sheets integration.</p>
+            <pre><code>{
   "csvUrl": "https://ghost.megabyte.space/api/v1/ghost-emf/export?...&amp;format=csv",
   "importDataFormula": "=IMPORTDATA(...)"
 }</code></pre>
-        </article>
+          </article>
 
-        <article class="panel endpoint-card">
-          <p class="card-label">GET</p>
-          <h2>/api/v1/ghost-emf/random?start=...&amp;end=...&amp;digits=10</h2>
-          <p>Derives a reproducible number from the selected stored snapshot range.</p>
-          <pre><code>{
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/ghost-emf/random</h2>
+            </div>
+            <p>Reproducible number derived from stored snapshots. Params: <code>start</code>, <code>end</code>, <code>digits</code>.</p>
+            <pre><code>{
   "randomNumber": "4729011842",
   "randomUint32": 1914038592,
   "sampleCount": 1440
 }</code></pre>
-          <p class="card-note">
-            On the site, this is presented as an experiment and POC rather than proof of any paranormal mechanism.
-          </p>
-        </article>
+            <p class="card-note">
+              Presented as an experiment — entropy derived from electromagnetic phenomena, not proof of paranormal mechanism.
+            </p>
+          </article>
+        </div>
       </section>
 
-      <section class="two-up">
+      <section>
+        <div class="panel-copy shell" style="margin-bottom: 1.5rem; margin-top: 2rem;">
+          <p class="eyebrow">Endpoints</p>
+          <h2><span class="gradient-text">Transmissions &amp; Interaction</span></h2>
+        </div>
+
+        <div class="docs-grid shell">
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/transmissions/live</h2>
+            </div>
+            <p>
+              Live feed of hotline calls and chat messages. Supports incremental polling via <code>since</code> param.
+              Caller numbers are masked for privacy.
+            </p>
+            <pre><code>{
+  "entries": [
+    {
+      "type": "call",
+      "callSid": "CA...",
+      "caller": "***-***-6602",
+      "transcript": "...",
+      "aiResponse": "...",
+      "createdAt": "2026-04-23T22:00:00.000Z"
+    },
+    {
+      "type": "chat",
+      "sessionId": "...",
+      "role": "user",
+      "content": "...",
+      "createdAt": "2026-04-23T22:01:00.000Z"
+    }
+  ],
+  "total": 142,
+  "latestAt": "2026-04-23T22:01:00.000Z"
+}</code></pre>
+            <div class="endpoint-params">
+              <span class="endpoint-param"><code>since</code> — ISO timestamp for incremental polling</span>
+              <span class="endpoint-param"><code>limit</code> — max entries (default 30, max 50)</span>
+            </div>
+          </article>
+
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/api/v1/transmission-count</h2>
+            </div>
+            <p>Total count of all transmissions (calls + chats) in the public record.</p>
+            <pre><code>{ "count": 142 }</code></pre>
+          </article>
+
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-post">POST</span>
+              <h2>/api/v1/chat</h2>
+            </div>
+            <p>
+              AI chat with the Ghost Signal persona. Everything submitted becomes part of the public record.
+              Uses Claude Sonnet for responses.
+            </p>
+            <pre><code>// Request
+{ "message": "Tell me about entropy.", "sessionId": "uuid" }
+
+// Response
+{
+  "response": "The signal speaks...",
+  "sessionId": "uuid"
+}</code></pre>
+          </article>
+
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-post">POST</span>
+              <h2>/api/v1/newsletter/subscribe</h2>
+            </div>
+            <p>Subscribe to The Signal Dispatch — weekly AI-summarized hotline submissions and campaign updates.</p>
+            <pre><code>// Request
+{ "email": "you@example.com" }
+
+// Response
+{ "ok": true }</code></pre>
+          </article>
+
+          <article class="panel endpoint-card">
+            <div class="endpoint-header">
+              <span class="endpoint-method endpoint-method-get">GET</span>
+              <h2>/health</h2>
+            </div>
+            <p>Health check. Returns status, version, and timestamp.</p>
+            <pre><code>{ "status": "ok", "version": "1.0.0", "timestamp": "..." }</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <hr class="section-divider" aria-hidden="true" />
+
+      <section class="two-up shell">
         <article class="panel">
           <p class="eyebrow">Caching</p>
           <h2>Cloudflare in front of Home Assistant</h2>
           <p>
-            The current endpoint is cached briefly at the edge to protect the upstream sensor source while staying
-            friendly to polling workloads. History and entropy responses use separate bounded TTLs.
+            Edge-cached at Cloudflare to protect the upstream sensor. Cache behavior varies by data center.
           </p>
           <ul class="signal-list">
-            <li>Current: short TTL for near-live polling</li>
-            <li>History: longer TTL for charts</li>
-            <li>Entropy: cached derived view over bounded windows</li>
-            <li>Snapshot exports come from D1 rows written every minute by cron</li>
-            <li>Cache API is edge-local, so global HIT behavior can vary by data center</li>
+            <li>Current/sensors: short TTL for near-live polling</li>
+            <li>History/entropy: longer TTL for charts and derived data</li>
+            <li>Snapshots: from D1 rows written every minute by cron</li>
+            <li>Transmissions: uncached, direct D1 query</li>
+            <li>Cache API is edge-local — global HIT behavior varies</li>
           </ul>
         </article>
 
@@ -211,43 +391,86 @@
           <p class="eyebrow">Rate limits</p>
           <h2>Public, but not abusable</h2>
           <p>
-            The API is read-only and rate-limited per IP. Every response includes a request ID and rate-limit headers
-            so clients can back off cleanly.
+            Read-only and rate-limited per IP via KV counters. Every response includes tracing headers.
           </p>
           <ul class="signal-list">
-            <li><code>X-Request-ID</code> for tracing</li>
-            <li><code>X-RateLimit-Limit</code> for total budget</li>
-            <li><code>X-RateLimit-Remaining</code> for remaining calls</li>
-            <li>CORS is explicit for browser-based polling from other domains</li>
+            <li><code>X-Request-ID</code> — unique request identifier</li>
+            <li><code>X-RateLimit-Limit</code> — total budget per window</li>
+            <li><code>X-RateLimit-Remaining</code> — remaining calls</li>
+            <li>CORS enabled for browser-based polling</li>
+            <li>Chat and newsletter require POST with JSON body</li>
           </ul>
         </article>
       </section>
 
-      <section class="panel">
-        <p class="eyebrow">Examples</p>
-        <h2>Use it from curl, JavaScript, Python, or Google Sheets</h2>
-        <div class="snippet-grid">
-          <pre><code>curl https://ghost.megabyte.space/api/v1/ghost-emf/current</code></pre>
-          <pre><code>const history = await fetch(
-  "https://ghost.megabyte.space/api/v1/ghost-emf/history?start=2026-04-03T02:47:58.394Z&amp;end=2026-04-23T23:00:00.000Z&amp;targetPoints=960"
-).then((r) =&gt; r.json())</code></pre>
-          <pre><code>import requests
+      <hr class="section-divider" aria-hidden="true" />
 
-timeline = requests.get(
-    "https://ghost.megabyte.space/api/v1/ghost-emf/timeline",
+      <section class="panel shell">
+        <p class="eyebrow">Quickstart</p>
+        <h2><span class="gradient-text">Start polling in seconds</span></h2>
+        <div class="docs-examples">
+          <div class="docs-example">
+            <span class="docs-example-label">curl</span>
+            <pre><code>curl https://ghost.megabyte.space/api/v1/sensors</code></pre>
+          </div>
+          <div class="docs-example">
+            <span class="docs-example-label">JavaScript</span>
+            <pre><code>const sensors = await fetch(
+  "https://ghost.megabyte.space/api/v1/sensors"
+).then(r =&gt; r.json())
+
+console.log(sensors.emf.numericValue) // 0.8 mG
+console.log(sensors.ef.numericValue)  // 2.1 V/m
+console.log(sensors.rf.numericValue)  // 0.003 mW/m²</code></pre>
+          </div>
+          <div class="docs-example">
+            <span class="docs-example-label">Python</span>
+            <pre><code>import requests
+
+sensors = requests.get(
+    "https://ghost.megabyte.space/api/v1/sensors",
     timeout=10,
-).json()</code></pre>
+).json()
+
+print(f"EMF: {sensors['emf']['numericValue']} mG")</code></pre>
+          </div>
+          <div class="docs-example">
+            <span class="docs-example-label">Google Sheets</span>
+            <pre><code>=IMPORTDATA("https://ghost.megabyte.space/api/v1/ghost-emf/export?format=csv")</code></pre>
+          </div>
+          <div class="docs-example">
+            <span class="docs-example-label">Polling (5s interval)</span>
+            <pre><code>let latest = null
+
+setInterval(async () =&gt; {
+  const params = latest ? `?since=${latest}` : ""
+  const res = await fetch(`/api/v1/transmissions/live${params}`)
+  const data = await res.json()
+  if (data.latestAt) latest = data.latestAt
+  data.entries.forEach(e =&gt; console.log(e.type, e.content || e.transcript))
+}, 5000)</code></pre>
+          </div>
         </div>
-        <pre><code>=IMPORTDATA("https://ghost.megabyte.space/api/v1/ghost-emf/export?start=2026-04-03T02:47:58.394Z&amp;end=2026-04-23T23:00:00.000Z&amp;format=csv")</code></pre>
-        <p class="card-note">
-          For a rolling window, you can still use <code>minutes</code>. For a full browser experience, prefer
-          explicit <code>start</code> and <code>end</code> timestamps plus <code>targetPoints</code>.
-        </p>
       </section>
     </main>
 
     <footer class="site-footer shell">
-      <p><a href="/">Back to the live site</a></p>
+      <p>ghost.megabyte.space &mdash; one sensor, one signal, one hotline.</p>
+      <p>
+        <a href="/">Signal</a>
+        <span class="footer-sep">/</span>
+        <a href="/transmissions">Transmissions</a>
+        <span class="footer-sep">/</span>
+        <a href="/docs">Docs</a>
+        <span class="footer-sep">/</span>
+        <a href="/api/docs">API</a>
+        <span class="footer-sep">/</span>
+        <a href="/privacy">Privacy</a>
+        <span class="footer-sep">/</span>
+        <a href="/terms">Terms</a>
+        <span class="footer-sep">/</span>
+        <a href="mailto:hey@megabyte.space">Contact</a>
+      </p>
     </footer>
 
     <script type="module" src="/app.js"></script>

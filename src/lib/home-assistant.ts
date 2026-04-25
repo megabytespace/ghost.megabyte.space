@@ -64,14 +64,10 @@ function coerceNumericValue(state: HomeAssistantState): number {
   return numericValue;
 }
 
-export async function fetchCurrentReading(env: Env): Promise<NormalizedReading> {
-  if (isMockSensorMode(env)) {
-    return buildMockReading(env);
-  }
-
+export async function fetchSensorReading(env: Env, entityId: string): Promise<NormalizedReading> {
   const state = await homeAssistantFetch<HomeAssistantState>(
     env,
-    `/api/states/${encodeURIComponent(env.EMF_SENSOR_ENTITY_ID)}`,
+    `/api/states/${encodeURIComponent(entityId)}`,
   );
 
   return {
@@ -90,6 +86,53 @@ export async function fetchCurrentReading(env: Env): Promise<NormalizedReading> 
       strategy: "cloudflare-cache-api",
     },
   };
+}
+
+export async function fetchCurrentReading(env: Env): Promise<NormalizedReading> {
+  if (isMockSensorMode(env)) {
+    return buildMockReading(env);
+  }
+
+  return fetchSensorReading(env, env.EMF_SENSOR_ENTITY_ID);
+}
+
+export interface AllSensorReadings {
+  emf: NormalizedReading | null;
+  ef: NormalizedReading | null;
+  rf: NormalizedReading | null;
+  sampledAt: string;
+}
+
+export async function fetchAllSensors(env: Env): Promise<AllSensorReadings> {
+  const sampledAt = new Date().toISOString();
+  const sensors: AllSensorReadings = { emf: null, ef: null, rf: null, sampledAt };
+
+  const fetches: Promise<void>[] = [];
+
+  fetches.push(
+    fetchSensorReading(env, env.EMF_SENSOR_ENTITY_ID)
+      .then((r) => { sensors.emf = r; })
+      .catch(() => {}),
+  );
+
+  if (env.EF_SENSOR_ENTITY_ID) {
+    fetches.push(
+      fetchSensorReading(env, env.EF_SENSOR_ENTITY_ID)
+        .then((r) => { sensors.ef = r; })
+        .catch(() => {}),
+    );
+  }
+
+  if (env.RF_SENSOR_ENTITY_ID) {
+    fetches.push(
+      fetchSensorReading(env, env.RF_SENSOR_ENTITY_ID)
+        .then((r) => { sensors.rf = r; })
+        .catch(() => {}),
+    );
+  }
+
+  await Promise.all(fetches);
+  return sensors;
 }
 
 export async function fetchHistoryPoints(env: Env, window: HistoryWindow): Promise<HistoryPoint[]> {
@@ -156,39 +199,34 @@ export async function fetchHistoryPoints(env: Env, window: HistoryWindow): Promi
   return points;
 }
 
+async function persistSingleSnapshot(env: Env, reading: NormalizedReading): Promise<void> {
+  if (!env.EMF_DB) return;
+  const id = `${reading.entityId}:${reading.sampledAt}`;
+  await env.EMF_DB.prepare(
+    `INSERT OR IGNORE INTO emf_snapshots (
+      id, entity_id, state, numeric_value, unit,
+      last_changed, last_updated, sampled_at, source
+    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
+  )
+    .bind(id, reading.entityId, reading.state, reading.numericValue,
+      reading.unit, reading.lastChanged, reading.lastUpdated,
+      reading.sampledAt, reading.source)
+    .run();
+}
+
 export async function persistSnapshot(env: Env): Promise<void> {
-  if (!env.EMF_DB) {
+  if (!env.EMF_DB) return;
+
+  if (isMockSensorMode(env)) {
+    const reading = buildMockReading(env);
+    await persistSingleSnapshot(env, reading);
     return;
   }
 
-  const reading = await fetchCurrentReading(env);
-  const id = `${reading.entityId}:${reading.sampledAt}`;
-
-  await env.EMF_DB.prepare(
-    `
-      INSERT OR IGNORE INTO emf_snapshots (
-        id,
-        entity_id,
-        state,
-        numeric_value,
-        unit,
-        last_changed,
-        last_updated,
-        sampled_at,
-        source
-      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
-    `,
-  )
-    .bind(
-      id,
-      reading.entityId,
-      reading.state,
-      reading.numericValue,
-      reading.unit,
-      reading.lastChanged,
-      reading.lastUpdated,
-      reading.sampledAt,
-      reading.source,
-    )
-    .run();
+  const all = await fetchAllSensors(env);
+  const snapshots: Promise<void>[] = [];
+  if (all.emf) snapshots.push(persistSingleSnapshot(env, all.emf));
+  if (all.ef) snapshots.push(persistSingleSnapshot(env, all.ef));
+  if (all.rf) snapshots.push(persistSingleSnapshot(env, all.rf));
+  await Promise.all(snapshots);
 }

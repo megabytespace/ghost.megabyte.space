@@ -1,30 +1,32 @@
 # E2E Matrix
 
-These 14 Playwright flows are intentionally written as multi-feature user journeys rather than isolated endpoint checks.
+14 multi-feature user journeys covering the Ghost Signal's 666 theme, chart explorer, timeline navigator, AI chat, hotline, and data pipeline.
 
-1. Homepage seeded flow: live cards, timeline, snapshot tools, random output
-2. Preset range flow: URL state, chart meta, export links, random links
-3. Custom range flow: form submission, chart refresh, Sheets formula, deep link
-4. Clipboard flow: copy range link + copy Google Sheets formula
-5. Deep-link restore flow: reload and second-tab consistency
-6. Download flow: CSV and Excel exports match snapshot JSON
-7. Docs flow: homepage -> docs -> Swagger UI -> OpenAPI contract
-8. Data consistency flow: Sheets helper, random endpoint, snapshot endpoint
-9. Cron flow: reset D1 -> trigger scheduled snapshots -> homepage utilities
-10. Error-and-recovery flow: invalid API request -> corrected UI range
-11. Mobile flow: nav, range controls, exports, docs
-12. Keyboard flow: skip link, nav, presets, custom range, docs
-13. Web property flow: manifest, robots, humans, sitemap, cross-links
-14. Future-ready dataset audit: snapshot/export/random agreement on one range
+## homepage-flows.spec.js
+1. Hero + status grid + "Enter the Signal" opens chat: glitch text, 4 status cards, chat panel aria toggle
+2. Preset range buttons: 24h/7d/30d/All URL state, chart meta, export link updates, active button styling
+3. Custom range form: date entry, chart refresh, Sheets formula, deep link, invalid range error
+4. Clipboard: copy range link + copy Sheets formula
+5. Deep-link restore: reload consistency, second-tab consistency
 
-Future-ready coverage already baked into the suite:
+## feature-flows.spec.js
+6. Timeline click navigation: click nodes, active state, detail panel (title/body/date/category), node structure
+7. Timeline keyboard navigation: ArrowRight, ArrowLeft, ArrowDown, ArrowUp, Home, End
+8. Chat widget open/close: toggle button, hero button, X close, Escape close, aria states, focus management
+9. Chat message flow: send message, user bubble, typing indicator, AI response, session persistence
+10. Hotline section: phone number, tel: href, section content, nav link, hero call button, transmission count
 
-- Shareable range URLs
-- Cron-driven D1 retention
-- Downloadable export formats
-- Google Sheets import compatibility
-- Deterministic random-number derivation from stored data
-- Installability/web-property surfaces
-- Mobile and keyboard-first usability
+## export-and-api-flows.spec.js
+11. CSV + Excel downloads match snapshot row count
+12. OpenAPI contract: all endpoints present, chat POST works, transmission-count returns number
+13. Data consistency: google-sheets + random + snapshot endpoints agree on range
+14. Cron D1 flow: reset, trigger scheduled, verify homepage populates
 
-If new features land later, extend these flows before adding isolated one-off tests.
+## platform-and-future-contracts.spec.js (bonus coverage)
+- Mobile viewport: nav, chat, timeline, hotline, range controls, docs navigation
+- Keyboard accessibility: skip link, nav tabs, chat Escape, timeline arrow keys
+- Web properties: manifest, robots, sitemap, security.txt, footer cross-links
+- Future-ready dataset audit: snapshot/export/random agreement
+- Invalid API range recovery
+
+Features covered: hero, status grid, chart explorer, range presets, custom range, clipboard, deep links, timeline navigator (click + keyboard), chat widget (open/close/messaging), hotline section, phone links, CSV/Excel export, OpenAPI contract, cron snapshots, data consistency, mobile, keyboard a11y, web properties.

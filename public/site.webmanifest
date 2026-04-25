@@ -1,27 +1,17 @@
 {
-  "name": "ghost.megabyte.space",
-  "short_name": "Ghost EMF",
+  "name": "The Ghost Signal",
+  "short_name": "Ghost Signal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#05090a",
-  "theme_color": "#0b1713",
-  "description": "Public Cloudflare-cached EMF readings, full-range snapshot exports, and entropy tools for one Home Assistant sensor.",
+  "background_color": "#060610",
+  "theme_color": "#060610",
+  "description": "A public EMF sensor, an AI hotline at (601) 666-6602, and a presidential campaign built on radical truth.",
   "icons": [
-    {
-      "src": "/logo-mark.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
+    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
   ],
   "shortcuts": [
-    {
-      "name": "Current Reading",
-      "url": "/api/v1/ghost-emf/current"
-    },
-    {
-      "name": "Developer Docs",
-      "url": "/docs"
-    }
+    { "name": "Current Reading", "url": "/api/v1/ghost-emf/current" },
+    { "name": "Developer Docs", "url": "/docs" }
   ]
 }

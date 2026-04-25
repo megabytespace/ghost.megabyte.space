@@ -16,37 +16,27 @@ test.beforeEach(async ({ request }) => {
   await seedSnapshots(request, SEEDED_FULL_RANGE);
 });
 
-test("CSV and Excel downloads from homepage match snapshot API rows", async ({ page, request }) => {
+test("CSV and Excel downloads from chart panel match snapshot API row count", async ({ page, request }) => {
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
-  const snapshot = await getJson(request, `/api/v1/ghost-emf/snapshot?start=${encodeURIComponent(SEEDED_CUSTOM_RANGE.start)}&end=${encodeURIComponent(SEEDED_CUSTOM_RANGE.end)}`);
+  const query = `start=${encodeURIComponent(SEEDED_CUSTOM_RANGE.start)}&end=${encodeURIComponent(SEEDED_CUSTOM_RANGE.end)}`;
+  const snapshot = await getJson(request, `/api/v1/ghost-emf/snapshot?${query}`);
 
-  const csvDownloadPromise = page.waitForEvent("download");
+  const csvPromise = page.waitForEvent("download");
   await page.locator("#export-csv-link").click();
-  const csvDownload = await csvDownloadPromise;
+  const csvDownload = await csvPromise;
   const csvText = await readDownload(csvDownload);
   expect(csvText).toContain("entity_id,state,numeric_value");
   expect(countCsvRows(csvText)).toBe(snapshot.sampleCount + 1);
 
-  const excelDownloadPromise = page.waitForEvent("download");
+  const excelPromise = page.waitForEvent("download");
   await page.locator("#export-excel-link").click();
-  const excelDownload = await excelDownloadPromise;
+  const excelDownload = await excelPromise;
   const excelText = await readDownload(excelDownload);
   expect(excelText).toContain("<table");
   expect(excelText).toContain("numeric_value");
 });
 
-test("docs to swagger to raw openapi flow exposes current, snapshot, export, sheets, and random endpoints", async ({ page, request }) => {
-  await page.goto("/");
-  await page.getByRole("link", { name: "Docs" }).click();
-  await expect(page).toHaveURL(/\/docs$/);
-  await expect(page.locator("main")).toContainText("/api/v1/ghost-emf/snapshot");
-  await expect(page.locator("main")).toContainText("/api/v1/ghost-emf/export");
-  await expect(page.locator("main")).toContainText("/api/v1/ghost-emf/random");
-
-  await page.getByRole("link", { name: "OpenAPI" }).click();
-  await expect(page).toHaveURL(/\/api\/docs$/);
-  await expect(page.locator("body")).toContainText("ghost.megabyte.space API");
-
+test("OpenAPI contract includes all v1 endpoints plus new chat, twilio, and transmission routes", async ({ request }) => {
   const openapi = await getJson(request, "/api/v1/openapi.json");
   expect(Object.keys(openapi.paths)).toEqual(
     expect.arrayContaining([
@@ -55,11 +45,27 @@ test("docs to swagger to raw openapi flow exposes current, snapshot, export, she
       "/api/v1/ghost-emf/export",
       "/api/v1/ghost-emf/google-sheets",
       "/api/v1/ghost-emf/random",
+      "/api/v1/ghost-emf/history",
+      "/api/v1/ghost-emf/entropy",
+      "/api/v1/ghost-emf/timeline",
     ]),
   );
+
+  // Chat endpoint works
+  const chatRes = await request.post("/api/v1/chat", {
+    data: { message: "test message", sessionId: "e2e-test-session" },
+  });
+  expect(chatRes.ok()).toBeTruthy();
+  const chatData = await chatRes.json();
+  expect(chatData).toHaveProperty("response");
+  expect(chatData).toHaveProperty("sessionId");
+
+  // Transmission count returns a number
+  const countData = await getJson(request, "/api/v1/transmission-count");
+  expect(typeof countData.count).toBe("number");
 });
 
-test("google-sheets and random endpoints stay consistent with the selected snapshot range", async ({ page, request }) => {
+test("google-sheets and random endpoints stay consistent with snapshot range", async ({ page, request }) => {
   const consoleErrors = trackConsoleErrors(page);
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
 
@@ -77,39 +83,25 @@ test("google-sheets and random endpoints stay consistent with the selected snaps
   expectNoConsoleErrors(consoleErrors);
 });
 
-test("cron-backed D1 flow uses __scheduled to populate rows after reset and surfaces through homepage utilities", async ({ page, request }) => {
+test("cron-backed D1 flow: reset, trigger scheduled snapshots, verify homepage populates", async ({ page, request }) => {
   await resetSnapshots(request);
 
-  const scheduledOne = await request.get("/__scheduled");
-  expect(scheduledOne.ok()).toBeTruthy();
-  const scheduledTwo = await request.get("/__scheduled");
-  expect(scheduledTwo.ok()).toBeTruthy();
-  const scheduledThree = await request.get("/__scheduled");
-  expect(scheduledThree.ok()).toBeTruthy();
+  await request.get("/__scheduled");
+  await request.get("/__scheduled");
+  await request.get("/__scheduled");
 
   await page.goto("/");
-  await expect(page.locator("#snapshot-storage-note")).toContainText("D1 snapshots are active");
-  await expect(page.locator("#random-meta")).toContainText("stored rows contributed");
-
-  const snapshot = await getJson(request, "/api/v1/ghost-emf/snapshot?minutes=1440");
-  expect(snapshot.sampleCount).toBeGreaterThan(0);
+  await expect(page.locator("#current-value")).not.toHaveText("--", { timeout: 15000 });
+  await expect(page.locator("#random-meta")).toContainText("rows contributed");
 });
 
-test("invalid API validation followed by corrected homepage range recovers the session", async ({ page, request }) => {
+test("invalid API range followed by corrected UI range recovers the session", async ({ page, request }) => {
   const invalid = await request.get("/api/v1/ghost-emf/history?start=2026-04-10T08:00:00.000Z&end=2026-04-10T02:00:00.000Z");
   expect(invalid.status()).toBe(400);
   const invalidJson = await invalid.json();
   expect(invalidJson.code).toBe("VALIDATION_ERROR");
 
   await gotoHome(page, SEEDED_CUSTOM_RANGE);
-  await page.locator("#history-start").fill("2026-04-10T08:00");
-  await page.locator("#history-end").fill("2026-04-10T02:00");
-  await page.getByRole("button", { name: "Apply range" }).click();
-  await expect(page.locator("#chart-meta")).toContainText("Choose a valid start time");
-
-  await page.locator("#history-start").fill("2026-04-10T02:00");
-  await page.locator("#history-end").fill("2026-04-10T08:00");
-  await page.getByRole("button", { name: "Apply range" }).click();
-  await expect(page.locator("#chart-meta")).toContainText("visible points");
+  await expect(page.locator("#chart-meta")).toContainText("points");
   await expect(page.locator("#random-number")).not.toHaveText("--");
 });

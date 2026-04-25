@@ -8,7 +8,7 @@ import { calculateEntropy } from "./lib/entropy";
 import { ApiError, jsonError } from "./lib/errors";
 import { applyResponseHeaders, getSecurityHeaders } from "./lib/headers";
 import { downsamplePoints, parseHistoryWindow } from "./lib/history";
-import { fetchCurrentReading, fetchHistoryPoints, persistSnapshot } from "./lib/home-assistant";
+import { fetchCurrentReading, fetchAllSensors, fetchHistoryPoints, persistSnapshot } from "./lib/home-assistant";
 import { areTestHelpersEnabled, resetSnapshots, seedSnapshots } from "./lib/test-helpers";
 import { publicReadRateLimit } from "./lib/rate-limit";
 import {
@@ -20,8 +20,12 @@ import {
   deriveSnapshotRandom,
   fetchSnapshotRecords,
 } from "./lib/snapshots";
+import { parse as parseYaml } from "yaml";
+import timelineYamlText from "./data/timeline.yaml";
+import { handleChat, getChatHistory } from "./lib/chat";
+import { buildGreetingTwiml, handleGather, getTransmissions, getTransmissionCount } from "./lib/twilio";
 import { storyMilestones, timelineAnnotations } from "./lib/timeline-events";
-import type { AppVariables, Env } from "./types";
+import type { AppVariables, Env, TimelineData } from "./types";
 
 type Bindings = {
   Bindings: Env;
@@ -81,6 +85,15 @@ const CurrentSchema = z
     }),
   })
   .openapi("GhostEmfCurrent");
+
+const AllSensorsSchema = z
+  .object({
+    emf: CurrentSchema.nullable(),
+    ef: CurrentSchema.nullable(),
+    rf: CurrentSchema.nullable(),
+    sampledAt: z.string(),
+  })
+  .openapi("AllSensorReadings");
 
 const HistoryPointSchema = z
   .object({
@@ -197,7 +210,212 @@ const RandomSchema = z
   .openapi("GhostEmfRandom");
 
 const app = new OpenAPIHono<Bindings>();
-const version = "0.1.0";
+const version = "0.2.0";
+
+function transmissionsPageHtml(): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transmission Log | Ghost Signal</title>
+  <meta name="description" content="Public record of every call and chat to the Ghost Signal AI hotline. Everything shared becomes part of the signal." />
+  <link rel="canonical" href="https://ghost.megabyte.space/transmissions" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#060610" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .tx-layout { padding-top: 1rem; padding-bottom: 3rem; }
+    .tx-hero {
+      text-align: center; padding: 2rem 0 2.5rem;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255, 23, 68, 0.08), transparent 60%);
+      border-bottom: 1px solid rgba(255, 23, 68, 0.15);
+      margin-bottom: 2rem;
+    }
+    .tx-hero h1 {
+      font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700; margin-top: 0.5rem;
+    }
+    .tx-stats {
+      display: flex; gap: 1.5rem; justify-content: center; margin-top: 1rem;
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);
+    }
+    .tx-stat-val { color: var(--accent-cyan); font-weight: 700; font-size: 1.2rem; display: block; }
+    .tx-synopsis {
+      padding: 1.5rem 2rem; margin-bottom: 2rem;
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: var(--radius-panel);
+      background: var(--bg-panel);
+    }
+    .tx-synopsis h2 {
+      font-family: var(--font-display); font-size: 1.1rem;
+      color: var(--accent-purple); margin-bottom: 0.75rem;
+    }
+    .tx-synopsis ul {
+      list-style: none; padding: 0;
+      font-size: 0.88rem; line-height: 1.8;
+    }
+    .tx-synopsis li::before {
+      content: "◆ "; color: var(--accent-cyan); font-size: 0.7rem;
+    }
+    .tx-filters {
+      display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .tx-filter-btn {
+      padding: 0.4rem 1rem; border-radius: var(--radius-button);
+      border: 1px solid var(--line); background: transparent;
+      color: var(--text-muted); font-family: var(--font-mono);
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .tx-filter-btn:hover, .tx-filter-btn.active {
+      border-color: var(--accent-cyan); color: var(--accent-cyan);
+      background: rgba(0, 229, 255, 0.06);
+    }
+    .tx-list { display: grid; gap: 1rem; }
+    .tx-card {
+      padding: 1.2rem 1.5rem;
+      border: 1px solid var(--line); border-radius: var(--radius-panel);
+      background: var(--bg-panel); transition: border-color 0.3s;
+      cursor: pointer;
+    }
+    .tx-card:hover { border-color: rgba(255, 23, 68, 0.3); }
+    .tx-card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .tx-card-type {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      padding: 0.15rem 0.5rem; border-radius: var(--radius-button);
+    }
+    .tx-card-type.call {
+      border: 1px solid var(--accent-red); color: var(--accent-red);
+    }
+    .tx-card-type.chat {
+      border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
+    }
+    .tx-card-time {
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);
+    }
+    .tx-card-preview {
+      font-size: 0.88rem; line-height: 1.6; color: var(--text);
+      max-height: 4.8rem; overflow: hidden;
+      mask-image: linear-gradient(180deg, #000 60%, transparent);
+      -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+    }
+    .tx-card.expanded .tx-card-preview {
+      max-height: none; mask-image: none; -webkit-mask-image: none;
+    }
+    .tx-card-turns { margin-top: 0.75rem; display: none; }
+    .tx-card.expanded .tx-card-turns { display: block; }
+    .tx-turn {
+      padding: 0.5rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem; line-height: 1.6;
+    }
+    .tx-turn-label {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 0.2rem;
+    }
+    .tx-turn-label.caller { color: var(--accent-red); }
+    .tx-turn-label.signal { color: var(--accent-cyan); }
+    .tx-empty {
+      text-align: center; padding: 3rem; color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 0.9rem;
+    }
+    .tx-load-more {
+      display: block; width: 100%; padding: 0.8rem;
+      margin-top: 1rem; border: 1px dashed var(--line);
+      border-radius: var(--radius-panel); background: transparent;
+      color: var(--text-muted); font-family: var(--font-mono);
+      font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+    }
+    .tx-load-more:hover {
+      border-color: var(--accent-cyan); color: var(--accent-cyan);
+    }
+    .tx-insignificant { opacity: 0.4; }
+    .tx-filters + .tx-list .tx-insignificant { display: none; }
+    .tx-filters.show-all + .tx-list .tx-insignificant { display: block; opacity: 0.6; }
+  </style>
+</head>
+<body data-page="transmissions">
+  <div class="noise"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="brand-lockup">
+      <img class="brand-logo" src="/logo-b.png" alt="Ghost Signal logo" width="40" height="40" />
+      <div class="brand-mark">GHOST // SIGNAL</div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="/">Signal</a>
+      <a href="/transmissions" aria-current="page">Transmissions</a>
+      <a href="/docs">Docs</a>
+      <a href="/api/docs">API</a>
+      <a class="nav-hotline" href="tel:+16016666602">666</a>
+    </nav>
+  </header>
+
+  <main class="shell tx-layout">
+    <div class="tx-hero">
+      <p class="eyebrow">PUBLIC RECORD // MEP TRANSMISSIONS</p>
+      <h1>Transmission Log</h1>
+      <p style="color: var(--text-muted); max-width: 50ch; margin: 0.5rem auto 0; font-size: 0.92rem;">
+        Every call and chat — recorded, transcribed, and published.
+        The Multiverse-Entropy Provider hides nothing.
+      </p>
+      <div class="tx-stats">
+        <div><span class="tx-stat-val" id="tx-total-calls">--</span> calls</div>
+        <div><span class="tx-stat-val" id="tx-total-chats">--</span> chats</div>
+        <div><span class="tx-stat-val" id="tx-total">--</span> total entries</div>
+      </div>
+    </div>
+
+    <div class="tx-synopsis" id="tx-synopsis">
+      <h2>What People Are Talking About</h2>
+      <ul id="tx-topics">
+        <li>Loading transmission analysis...</li>
+      </ul>
+    </div>
+
+    <div class="tx-filters" id="tx-filters">
+      <button class="tx-filter-btn active" data-filter="all">All</button>
+      <button class="tx-filter-btn" data-filter="call">Calls Only</button>
+      <button class="tx-filter-btn" data-filter="chat">Chats Only</button>
+      <button class="tx-filter-btn" data-filter="significant">Significant Only</button>
+      <button class="tx-filter-btn" data-filter="show-all">Include Minor</button>
+    </div>
+
+    <div class="tx-list" id="tx-list">
+      <div class="tx-empty">Loading transmissions...</div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-meta">
+      <p class="footer-brand">Ghost Signal — Multiverse-Entropy Provider (MEP)</p>
+      <p class="footer-copy">Personal story. Believe it or not. Wrapped into an entropy API.</p>
+    </div>
+  </footer>
+
+  <script src="/transmissions.js"></script>
+</body>
+</html>`;
+}
+
+let cachedTimeline: TimelineData | null = null;
+function getTimelineData(): TimelineData {
+  if (!cachedTimeline) {
+    cachedTimeline = parseYaml(timelineYamlText) as TimelineData;
+  }
+  return cachedTimeline;
+}
 
 function getDefaultCache(): Cache {
   return (caches as CacheStorage & { default: Cache }).default;
@@ -356,6 +574,48 @@ app.openapi(currentRoute, async (c) => {
   response.headers.set("cache-control", cacheControl);
   response.headers.set("x-cache-status", "MISS");
   writeCachedJson(cacheKey, reading, cacheControl, c.executionCtx);
+
+  return response;
+});
+
+const sensorsRoute = createRoute({
+  method: "get",
+  path: "/api/v1/sensors",
+  summary: "Get all GQ EMF-390 sensor readings (EMF, EF, RF)",
+  tags: ["Ghost EMF"],
+  responses: {
+    200: {
+      description: "All available sensor readings",
+      content: {
+        "application/json": {
+          schema: AllSensorsSchema,
+        },
+      },
+    },
+  },
+});
+
+app.openapi(sensorsRoute, async (c) => {
+  const ttl = getCurrentCacheTtl(c.env);
+  const cacheKey = new Request(new URL("/__cache/sensors/all", c.req.url).toString(), {
+    method: "GET",
+  });
+  const cached = await readCachedJson<z.infer<typeof AllSensorsSchema>>(cacheKey);
+
+  if (cached) {
+    const response = c.json(cached, 200);
+    response.headers.set("cache-control", `public, max-age=${ttl}, stale-while-revalidate=15`);
+    response.headers.set("x-cache-status", "HIT");
+    return response;
+  }
+
+  const readings = await fetchAllSensors(c.env);
+  const response = c.json(readings, 200);
+  const cacheControl = `public, max-age=${ttl}, stale-while-revalidate=15`;
+
+  response.headers.set("cache-control", cacheControl);
+  response.headers.set("x-cache-status", "MISS");
+  writeCachedJson(cacheKey, readings, cacheControl, c.executionCtx);
 
   return response;
 });
@@ -690,20 +950,204 @@ const timelineRoute = createRoute({
   },
 });
 
-app.openapi(timelineRoute, (c) =>
-  c.json(
+app.openapi(timelineRoute, (c) => {
+  const yamlData = getTimelineData();
+  return c.json(
     {
       entityId: c.env.EMF_SENSOR_ENTITY_ID,
       earliestKnownAt: getSensorStartedAt(c.env),
       latestKnownAt: new Date().toISOString(),
       annotations: timelineAnnotations,
       milestones: storyMilestones,
+      events: yamlData.events,
+      categories: yamlData.categories,
       safetyNote:
         "Do not use this dataset to rationalize cruelty, abuse any animals, or justify harm to anyone.",
     },
     200,
-  ),
-);
+  );
+});
+
+app.post("/api/v1/chat", async (c) => {
+  const body = await c.req.json<{ message?: string; sessionId?: string }>();
+  const message = body.message?.trim();
+  if (!message || message.length === 0 || message.length > 2000) {
+    return c.json({ error: "Message must be 1-2000 characters.", code: "INVALID_MESSAGE" }, 400);
+  }
+
+  const sessionId = body.sessionId || crypto.randomUUID();
+  const ip = c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for") ?? "unknown";
+  const response = await handleChat(c.env, message, sessionId, ip);
+
+  return c.json({ response, sessionId }, 200);
+});
+
+app.get("/api/v1/chat/history/:sessionId", async (c) => {
+  const sessionId = c.req.param("sessionId");
+  if (!sessionId) {
+    return c.json({ error: "Session ID required.", code: "MISSING_SESSION" }, 400);
+  }
+
+  const messages = await getChatHistory(c.env, sessionId);
+  return c.json({ messages }, 200);
+});
+
+app.post("/api/v1/twilio/voice", async (c) => {
+  const siteUrl = getSiteUrl(c.env);
+  const gatherUrl = `${siteUrl}/api/v1/twilio/gather`;
+  const twiml = buildGreetingTwiml(gatherUrl);
+  return new Response(twiml, {
+    headers: { "content-type": "text/xml; charset=utf-8" },
+  });
+});
+
+app.post("/api/v1/twilio/gather", async (c) => {
+  const formData = await c.req.parseBody();
+  const speechResult = (formData.SpeechResult as string) ?? "";
+  const callSid = (formData.CallSid as string) ?? "unknown";
+  const callerNumber = (formData.From as string) ?? "unknown";
+  const siteUrl = getSiteUrl(c.env);
+  const gatherUrl = `${siteUrl}/api/v1/twilio/gather`;
+
+  const twiml = await handleGather(c.env, speechResult, callSid, callerNumber, gatherUrl);
+  return new Response(twiml, {
+    headers: { "content-type": "text/xml; charset=utf-8" },
+  });
+});
+
+app.post("/api/v1/twilio/status", async (c) => {
+  return c.json({ ok: true }, 200);
+});
+
+app.get("/api/v1/transmissions", async (c) => {
+  const transmissions = await getTransmissions(c.env, 50);
+  return c.json({ transmissions, total: transmissions.length }, 200);
+});
+
+app.get("/api/v1/transmissions/live", async (c) => {
+  if (!c.env.EMF_DB) return c.json({ entries: [], total: 0 }, 200);
+
+  const sinceParam = c.req.query("since");
+  const limitParam = c.req.query("limit");
+  const limit = Math.min(50, Math.max(1, Number(limitParam) || 30));
+
+  const callQuery = sinceParam
+    ? c.env.EMF_DB.prepare(
+        "SELECT call_sid, caller_number, transcript, ai_response, turn_number, created_at FROM call_transmissions WHERE created_at > ? ORDER BY created_at DESC LIMIT ?"
+      ).bind(sinceParam, limit)
+    : c.env.EMF_DB.prepare(
+        "SELECT call_sid, caller_number, transcript, ai_response, turn_number, created_at FROM call_transmissions ORDER BY created_at DESC LIMIT ?"
+      ).bind(limit);
+
+  const chatQuery = sinceParam
+    ? c.env.EMF_DB.prepare(
+        "SELECT session_id, role, content, created_at FROM chat_messages WHERE created_at > ? ORDER BY created_at DESC LIMIT ?"
+      ).bind(sinceParam, limit)
+    : c.env.EMF_DB.prepare(
+        "SELECT session_id, role, content, created_at FROM chat_messages ORDER BY created_at DESC LIMIT ?"
+      ).bind(limit);
+
+  const [calls, chats, countRes] = await Promise.all([
+    callQuery.all(),
+    chatQuery.all(),
+    c.env.EMF_DB.prepare("SELECT (SELECT COUNT(*) FROM call_transmissions) + (SELECT COUNT(*) FROM chat_messages) as total").first<{ total: number }>(),
+  ]);
+
+  const entries: Array<{
+    type: "call" | "chat";
+    createdAt: string;
+    callSid?: string;
+    callerNumber?: string;
+    transcript?: string;
+    aiResponse?: string;
+    turnNumber?: number;
+    sessionId?: string;
+    role?: string;
+    content?: string;
+  }> = [];
+
+  for (const r of calls.results) {
+    entries.push({
+      type: "call",
+      createdAt: r.created_at as string,
+      callSid: r.call_sid as string,
+      callerNumber: (r.caller_number as string).replace(/\d(?=\d{4})/g, "*"),
+      transcript: r.transcript as string,
+      aiResponse: r.ai_response as string,
+      turnNumber: r.turn_number as number,
+    });
+  }
+
+  for (const r of chats.results) {
+    entries.push({
+      type: "chat",
+      createdAt: r.created_at as string,
+      sessionId: (r.session_id as string).slice(0, 8),
+      role: r.role as string,
+      content: r.content as string,
+    });
+  }
+
+  entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  return c.json({
+    entries: entries.slice(0, limit),
+    total: countRes?.total ?? 0,
+    latestAt: entries[0]?.createdAt ?? null,
+  }, 200, {
+    "cache-control": "public, max-age=3, stale-while-revalidate=10",
+  });
+});
+
+app.get("/api/v1/transmission-count", async (c) => {
+  const count = await getTransmissionCount(c.env);
+  return c.json({ count }, 200);
+});
+
+app.post("/api/v1/newsletter/subscribe", async (c) => {
+  const body = await c.req.json<{ email?: string }>().catch(() => ({} as { email?: string }));
+  const email = body.email?.trim()?.toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return c.json({ error: "Valid email required." }, 400);
+  }
+  if (c.env.EMF_DB) {
+    await c.env.EMF_DB.prepare(
+      "INSERT OR IGNORE INTO newsletter_subscribers (email, subscribed_at) VALUES (?, ?)"
+    ).bind(email, new Date().toISOString()).run();
+  }
+  return c.json({ ok: true, message: "Subscribed. The signal will find you." });
+});
+
+app.get("/transmissions", async (c) => {
+  return c.html(transmissionsPageHtml());
+});
+
+app.get("/transmissions/:callSid.txt", async (c) => {
+  const callSid = c.req.param("callSid");
+  if (!c.env.EMF_DB) return c.text("No database.", 503);
+
+  const result = await c.env.EMF_DB
+    .prepare("SELECT transcript, ai_response, turn_number, created_at FROM call_transmissions WHERE call_sid = ? ORDER BY turn_number ASC")
+    .bind(callSid)
+    .all();
+
+  if (result.results.length === 0) return c.text("Transmission not found.", 404);
+
+  let output = `GHOST SIGNAL HOTLINE — Call ${callSid}\n`;
+  output += `Recorded: ${result.results[0]?.created_at ?? "unknown"}\n`;
+  output += "─────────────────────────────────\n\n";
+  for (const t of result.results) {
+    output += `CALLER: ${t.transcript}\n`;
+    output += `SIGNAL: ${t.ai_response}\n\n`;
+  }
+
+  return new Response(output, {
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "public, max-age=300",
+    },
+  });
+});
 
 app.doc("/api/v1/openapi.json", {
   openapi: "3.0.0",
@@ -720,7 +1164,7 @@ app.get("/api/docs", swaggerUI({ url: "/api/v1/openapi.json" }));
 
 app.options("/api/*", (c) => {
   c.header("access-control-allow-origin", "*");
-  c.header("access-control-allow-methods", "GET, OPTIONS");
+  c.header("access-control-allow-methods", "GET, POST, OPTIONS");
   c.header("access-control-allow-headers", "Content-Type");
   return c.body(null, 204);
 });
@@ -762,6 +1206,94 @@ app.get("/__test/seed", async (c) => {
   );
 });
 
+// Strip Telnet IAC negotiation sequences from raw TCP data
+function stripTelnet(data: Uint8Array): Uint8Array {
+  const out: number[] = [];
+  let i = 0;
+  while (i < data.length) {
+    if (data[i] === 0xff && i + 1 < data.length) {
+      const cmd = data[i + 1];
+      if (cmd >= 0xfb && cmd <= 0xfe) {
+        // WILL/WONT/DO/DONT + option byte = 3 bytes
+        i += 3;
+      } else if (cmd === 0xfa) {
+        // Sub-negotiation: skip until IAC SE (0xFF 0xF0)
+        i += 2;
+        while (i < data.length) {
+          if (data[i] === 0xff && i + 1 < data.length && data[i + 1] === 0xf0) {
+            i += 2;
+            break;
+          }
+          i++;
+        }
+      } else if (cmd === 0xff) {
+        // Escaped 0xFF = literal 0xFF
+        out.push(0xff);
+        i += 2;
+      } else {
+        // Other 2-byte commands (GA, NOP, etc.)
+        i += 2;
+      }
+    } else {
+      out.push(data[i]);
+      i++;
+    }
+  }
+  return new Uint8Array(out);
+}
+
+// WebSocket-to-TCP proxy for Avatar MUD
+app.get("/ws/mud", async (c) => {
+  const upgradeHeader = c.req.header("Upgrade");
+  if (upgradeHeader !== "websocket") {
+    return c.text("Expected WebSocket upgrade", 426);
+  }
+
+  const pair = new WebSocketPair();
+  const [client, server] = [pair[0], pair[1]];
+  server.accept();
+
+  const { connect } = await import("cloudflare:sockets");
+  const tcpSocket = connect("avatar.outland.org:3000");
+
+  // TCP readable → strip Telnet negotiation → WebSocket
+  const reader = tcpSocket.readable.getReader();
+  (async () => {
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const cleaned = stripTelnet(value);
+        if (cleaned.length > 0) {
+          try { server.send(cleaned); } catch { break; }
+        }
+      }
+    } catch {
+      // TCP connection closed
+    } finally {
+      try { server.close(1000, "TCP closed"); } catch { /* already closed */ }
+    }
+  })();
+
+  // WebSocket → TCP writable
+  const writer = tcpSocket.writable.getWriter();
+  server.addEventListener("message", async (event) => {
+    const data =
+      typeof event.data === "string"
+        ? new TextEncoder().encode(event.data)
+        : new Uint8Array(event.data as ArrayBuffer);
+    try { await writer.write(data); } catch { /* TCP closed */ }
+  });
+
+  server.addEventListener("close", () => {
+    try { writer.close(); } catch { /* already closed */ }
+    try { tcpSocket.close(); } catch { /* already closed */ }
+  });
+
+  return new Response(null, { status: 101, webSocket: client });
+});
+
 app.get("*", async (c) => {
   const url = new URL(c.req.url);
   const pathname = url.pathname;
@@ -770,12 +1302,21 @@ app.get("*", async (c) => {
     throw new ApiError(`Route GET ${pathname} was not found.`, 404, "NOT_FOUND");
   }
 
-  const assetPath = pathname === "/" ? "/index.html" : pathname === "/docs" ? "/docs.html" : pathname;
+  const assetPath = pathname === "/" ? "/index.html" : pathname === "/docs" ? "/docs.html" : pathname === "/privacy" ? "/privacy.html" : pathname === "/terms" ? "/terms.html" : pathname;
   const assetUrl = new URL(assetPath, url);
-  const assetResponse = await c.env.ASSETS.fetch(new Request(assetUrl.toString(), c.req.raw));
+  let assetResponse = await c.env.ASSETS.fetch(new Request(assetUrl.toString(), { method: "GET" }));
+
+  // ASSETS may redirect /index.html → / — follow it internally to avoid loops
+  if (assetResponse.status >= 300 && assetResponse.status < 400) {
+    const redirectTo = assetResponse.headers.get("location");
+    if (redirectTo) {
+      const redirectUrl = new URL(redirectTo, assetUrl);
+      assetResponse = await c.env.ASSETS.fetch(new Request(redirectUrl.toString(), { method: "GET" }));
+    }
+  }
 
   if (assetResponse.status === 404 && !assetPath.includes(".")) {
-    const fallback = await c.env.ASSETS.fetch(new Request(new URL("/index.html", url).toString(), c.req.raw));
+    const fallback = await c.env.ASSETS.fetch(new Request(new URL("/index.html", url).toString(), { method: "GET" }));
     return applyResponseHeaders(fallback, {
       "cache-control": "public, max-age=0, must-revalidate",
     });
