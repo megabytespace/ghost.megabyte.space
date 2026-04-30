@@ -1,4 +1,4 @@
-import { swaggerUI } from "@hono/swagger-ui";
+import { SwaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { logger } from "hono/logger";
 import { HTTPException } from "hono/http-exception";
@@ -567,15 +567,19 @@ app.openapi(currentRoute, async (c) => {
     return response;
   }
 
-  const reading = await fetchCurrentReading(c.env);
-  const response = c.json(reading, 200);
-  const cacheControl = `public, max-age=${ttl}, stale-while-revalidate=15`;
+  try {
+    const reading = await fetchCurrentReading(c.env);
+    const response = c.json(reading, 200);
+    const cacheControl = `public, max-age=${ttl}, stale-while-revalidate=15`;
 
-  response.headers.set("cache-control", cacheControl);
-  response.headers.set("x-cache-status", "MISS");
-  writeCachedJson(cacheKey, reading, cacheControl, c.executionCtx);
+    response.headers.set("cache-control", cacheControl);
+    response.headers.set("x-cache-status", "MISS");
+    writeCachedJson(cacheKey, reading, cacheControl, c.executionCtx);
 
-  return response;
+    return response;
+  } catch {
+    return c.json({ error: "Sensor upstream unavailable", code: "UPSTREAM_ERROR" }, 503);
+  }
 });
 
 const sensorsRoute = createRoute({
@@ -609,15 +613,19 @@ app.openapi(sensorsRoute, async (c) => {
     return response;
   }
 
-  const readings = await fetchAllSensors(c.env);
-  const response = c.json(readings, 200);
-  const cacheControl = `public, max-age=${ttl}, stale-while-revalidate=15`;
+  try {
+    const readings = await fetchAllSensors(c.env);
+    const response = c.json(readings, 200);
+    const cacheControl = `public, max-age=${ttl}, stale-while-revalidate=15`;
 
-  response.headers.set("cache-control", cacheControl);
-  response.headers.set("x-cache-status", "MISS");
-  writeCachedJson(cacheKey, readings, cacheControl, c.executionCtx);
+    response.headers.set("cache-control", cacheControl);
+    response.headers.set("x-cache-status", "MISS");
+    writeCachedJson(cacheKey, readings, cacheControl, c.executionCtx);
 
-  return response;
+    return response;
+  } catch {
+    return c.json({ error: "Sensor upstream unavailable", code: "UPSTREAM_ERROR" }, 503);
+  }
 });
 
 const historyRoute = createRoute({
@@ -1104,6 +1112,38 @@ app.get("/api/v1/transmission-count", async (c) => {
   return c.json({ count }, 200);
 });
 
+app.post("/api/v1/debate", async (c) => {
+  const body = await c.req.json<{ topic?: string }>().catch(() => ({} as { topic?: string }));
+  const topic = body.topic || "End the Federal Reserve";
+
+  // Generate debate rounds — client-side pre-written for now (no AI dependency)
+  const debateBank: Record<string, Array<{ for: string; against: string }>> = {
+    "End the Federal Reserve": [
+      { for: "The Fed enables unchecked monetary policy that devalues savings of working families. Transparency and accountability require its dissolution.", against: "Without the Fed, who manages monetary crises? The 2008 response, however imperfect, prevented a depression." },
+      { for: "A decentralized, auditable monetary system — backed by entropy-verified data — removes the possibility of elite manipulation.", against: "Decentralized systems lack the speed needed for crisis intervention. Markets need a lender of last resort." },
+      { for: "Tom Greene said it: 'I want to throw the Piggy.' The Federal Reserve eats off everyone's plate, including emaciated children in third-world countries.", against: "Abolishing the Fed without a replacement creates a power vacuum. Who sets interest rates? Who stabilizes currency?" },
+    ],
+    "AI-Augmented Presidency": [
+      { for: "An AI-augmented President removes human bias, corruption, and incompetence from executive decisions. The teleprompter already runs the show — make it honest.", against: "Democracy requires human accountability. An AI cannot be impeached, cannot feel empathy, cannot represent the people's will." },
+      { for: "Brian Zalewski offers an entropy API into his living corridors — proof that AI can take over Presidential functions with true randomness no algorithm can fake.", against: "Basing national security on EMF readings from one person's home is not governance — it's performance art." },
+      { for: "Every President reads from a script anyway. At least an AI script would be optimized for outcomes instead of donor appeasement.", against: "The President's role includes diplomacy, intuition in crisis, and moral leadership. These are fundamentally human." },
+    ],
+    "Universal Basic Income": [
+      { for: "UBI eliminates poverty at the root. A team from Bangalore can program the fix decades sooner than Washington bureaucracy allows.", against: "UBI without production creates inflation. If everyone has money but nobody works, prices rise and value collapses." },
+      { for: "Automation is eliminating jobs faster than retraining can keep up. UBI is not charity — it's infrastructure for the AI age.", against: "Targeted programs for education and healthcare are more efficient than blanket cash transfers with no conditions." },
+      { for: "Global humanitarian relief. Gaza has fallen. The Ghost of Kiev stood strong. UBI is the policy that changes everything.", against: "Funding UBI globally requires unprecedented international cooperation that has never materialized for any policy." },
+    ],
+    "Ghost Signal Entropy Science": [
+      { for: "True randomness from a living EMF source — entropy no algorithm can fake. Built into AI to prevent deterministic tyranny.", against: "EMF readings from a single sensor are noise, not entropy. Peer-reviewed RNG hardware already exists." },
+      { for: "The multiverse fog-of-war theory suggests EMF fluctuations represent genuine quantum-adjacent entropy observable at macro scale.", against: "Extraordinary claims require extraordinary evidence. Publishing EMF data is not the same as proving multiverse interaction." },
+      { for: "By feeding true randomness into AI from a source that even abominable forces cannot control, we protect free will itself.", against: "Cryptographically secure PRNGs are already indistinguishable from true randomness for all practical purposes." },
+    ],
+  };
+
+  const rounds = debateBank[topic] || debateBank["End the Federal Reserve"];
+  return c.json({ topic, rounds });
+});
+
 app.post("/api/v1/newsletter/subscribe", async (c) => {
   const body = await c.req.json<{ email?: string }>().catch(() => ({} as { email?: string }));
   const email = body.email?.trim()?.toLowerCase();
@@ -1160,7 +1200,59 @@ app.doc("/api/v1/openapi.json", {
   servers: [{ url: "https://ghost.megabyte.space" }],
 });
 
-app.get("/api/docs", swaggerUI({ url: "/api/v1/openapi.json" }));
+app.get("/api/docs", (c) => {
+  return c.html(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghost Signal API</title>
+  <style>
+    body { background: #060610; color: #e0e0e0; margin: 0; }
+    .swagger-ui { background: #060610; }
+    .swagger-ui .topbar { background: #0a0a1a; border-bottom: 1px solid rgba(0,229,255,0.15); }
+    .swagger-ui .topbar .download-url-wrapper .select-label select { background: #111; color: #e0e0e0; border: 1px solid #333; }
+    .swagger-ui .info .title, .swagger-ui .info .title small { color: #00E5FF; }
+    .swagger-ui .info p, .swagger-ui .info li, .swagger-ui .info table td { color: #ccc; }
+    .swagger-ui .opblock-tag { color: #e0e0e0; border-bottom-color: rgba(255,255,255,0.1); }
+    .swagger-ui .opblock .opblock-summary { border-color: rgba(255,255,255,0.1); }
+    .swagger-ui .opblock.opblock-get { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.3); }
+    .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #00E5FF; color: #060610; }
+    .swagger-ui .opblock.opblock-post { background: rgba(124,58,237,0.06); border-color: rgba(124,58,237,0.3); }
+    .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #7C3AED; }
+    .swagger-ui .opblock .opblock-summary-description { color: #aaa; }
+    .swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-path__deprecated { color: #e0e0e0; }
+    .swagger-ui .opblock-body, .swagger-ui .opblock .opblock-section-header { background: #0a0a1a; }
+    .swagger-ui .opblock .opblock-section-header h4 { color: #e0e0e0; }
+    .swagger-ui table thead tr th, .swagger-ui table thead tr td { color: #ccc; border-bottom-color: rgba(255,255,255,0.1); }
+    .swagger-ui .parameter__name, .swagger-ui .parameter__type { color: #ccc; }
+    .swagger-ui .parameter__name.required::after { color: #FF1744; }
+    .swagger-ui .model-title, .swagger-ui .model { color: #e0e0e0; }
+    .swagger-ui .model-box { background: #0a0a1a; }
+    .swagger-ui .models { border-color: rgba(255,255,255,0.1); }
+    .swagger-ui .btn { color: #e0e0e0; border-color: rgba(255,255,255,0.2); }
+    .swagger-ui .btn.execute { background: #00E5FF; color: #060610; border-color: #00E5FF; }
+    .swagger-ui .responses-inner { background: #0a0a1a; }
+    .swagger-ui .response-col_status { color: #00E5FF; }
+    .swagger-ui .response-col_description { color: #ccc; }
+    .swagger-ui .highlight-code .microlight, .swagger-ui pre.microlight { background: #111; color: #e0e0e0; }
+    .swagger-ui .scheme-container { background: #0a0a1a; box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .swagger-ui .scheme-container .schemes > label { color: #ccc; }
+    .swagger-ui select { background: #111; color: #e0e0e0; border-color: #333; }
+    .swagger-ui input[type=text] { background: #111; color: #e0e0e0; border-color: #333; }
+    .swagger-ui .loading-container .loading::after { color: #00E5FF; }
+    .swagger-ui .copy-to-clipboard { filter: invert(1); }
+    .swagger-ui .prop-type { color: #50AAE3; }
+    .swagger-ui .prop-format { color: #7C3AED; }
+    .swagger-ui .markdown p, .swagger-ui .markdown li { color: #ccc; }
+    .swagger-ui .model-toggle::after { filter: invert(1); }
+  </style>
+</head>
+<body>
+  ${SwaggerUI({ url: "/api/v1/openapi.json" })}
+</body>
+</html>`);
+});
 
 app.options("/api/*", (c) => {
   c.header("access-control-allow-origin", "*");

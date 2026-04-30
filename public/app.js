@@ -787,6 +787,11 @@ function initScrollReveal() {
   );
 
   sections.forEach((s) => observer.observe(s));
+
+  // Fallback: reveal any sections still hidden after 3s
+  setTimeout(() => {
+    sections.forEach((s) => s.classList.add("is-revealed"));
+  }, 3000);
 }
 
 /* ── Live Transmission Feed ── */
