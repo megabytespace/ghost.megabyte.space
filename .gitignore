@@ -1,13 +1,59 @@
+# Dependencies
 node_modules/
-dist/
-.wrangler/
 .pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+.wrangler/
+
+# Env / secrets
 .dev.vars
+.dev.vars.local
 .env
-.env.local
+.env.*
+!.env.example
+!.dev.vars.example
+!.dev.vars.playwright
+
+# Logs
 *.log
-.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test artifacts
 .playwright/
 playwright-report/
+playwright/.cache/
 test-results/
+coverage/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# Claude Code
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/cache/
+.claude/logs/
+
+# Asset workspace cruft
+public/.crop-backup/
+public/.tmp/
+
+# Misc local cruft
+*.bak
+*.orig
+*.tmp
+.cache/
