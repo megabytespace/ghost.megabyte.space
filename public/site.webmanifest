@@ -5,10 +5,11 @@
   "display": "standalone",
   "background_color": "#060610",
   "theme_color": "#060610",
-  "description": "A public EMF sensor, an AI hotline at (601) 666-6602, and a presidential campaign built on radical truth.",
+  "description": "A public EMF sensor, an AI hotline at (601) 666-6602, and a public record built on radical truth.",
   "icons": [
-    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/android-chrome-192x192.png?v=20260501-ghost", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/android-chrome-512x512.png?v=20260501-ghost", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/maskable-icon-512.png?v=20260501-ghost", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     { "name": "Current Reading", "url": "/api/v1/ghost-emf/current" },

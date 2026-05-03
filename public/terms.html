@@ -15,19 +15,28 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ghost.megabyte.space/terms" />
-    <meta property="og:image" content="https://ghost.megabyte.space/og-image.png" />
+    <meta property="og:image" content="https://ghost.megabyte.space/og-image.jpg?v=20260501-666" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <link rel="canonical" href="https://ghost.megabyte.space/terms" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20260501-ghost" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=20260501-ghost" />
+    <link rel="icon" href="/favicon.ico?v=20260501-ghost" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260501-ghost" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#060610" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260501-reveal" />
+    <script>
+      (function () {
+        try {
+          var rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+          if (!rm || !rm.matches) document.documentElement.classList.add('js-reveal-active');
+        } catch (e) {}
+      })();
+    </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -46,7 +55,7 @@
 
     <header class="site-header">
       <div class="brand-lockup">
-        <img class="brand-logo" src="/logo-b.png" alt="Ghost Signal logo" width="40" height="40" />
+        <img class="brand-logo" src="/logo-nav.png?v=20260501-ghost" alt="Ghost Signal logo" width="64" height="64" />
         <div class="brand-mark">GHOST // SIGNAL</div>
       </div>
       <nav class="site-nav" aria-label="Primary">
@@ -54,7 +63,6 @@
         <a href="/transmissions">Transmissions</a>
         <a href="/docs">Docs</a>
         <a href="/api/docs">API</a>
-        <a href="tel:+16016666602" class="nav-hotline">666</a>
       </nav>
     </header>
 
@@ -87,7 +95,7 @@
           <p>
             ghost.megabyte.space provides public access to real-time electromagnetic field sensor data, entropy analysis,
             AI chat, a voice AI hotline, and derived random numbers. The service is operated by Brian Zalewski
-            under the Megabyte Labs organization as a public-interest and campaign project.
+            under the Megabyte Labs organization as a public-interest research project.
           </p>
         </section>
 

@@ -1,4 +1,3 @@
-import { SwaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { logger } from "hono/logger";
 import { HTTPException } from "hono/http-exception";
@@ -349,18 +348,26 @@ function transmissionsPageHtml(): string {
   <div class="scanlines" aria-hidden="true"></div>
 
   <header class="site-header">
-    <div class="brand-lockup">
-      <img class="brand-logo" src="/logo-b.png" alt="Ghost Signal logo" width="40" height="40" />
+    <a class="brand-lockup" href="/" aria-label="Ghost Signal — home" style="text-decoration:none;color:inherit;">
+      <img class="brand-logo" src="/logo-nav.png?v=20260501-ghost" alt="Ghost Signal logo" width="64" height="64" />
       <div class="brand-mark">GHOST // SIGNAL</div>
-    </div>
+    </a>
     <nav class="site-nav" aria-label="Primary">
       <a href="/">Signal</a>
       <a href="/transmissions" aria-current="page">Transmissions</a>
       <a href="/docs">Docs</a>
       <a href="/api/docs">API</a>
-      <a class="nav-hotline" href="tel:+16016666602">666</a>
     </nav>
   </header>
+  <script type="speculationrules">
+  {
+    "prerender": [
+      { "where": { "href_matches": "/" }, "eagerness": "moderate" },
+      { "where": { "href_matches": "/docs" }, "eagerness": "moderate" },
+      { "where": { "href_matches": "/api/docs" }, "eagerness": "moderate" }
+    ]
+  }
+  </script>
 
   <main class="shell tx-layout">
     <div class="tx-hero">
@@ -1114,24 +1121,24 @@ app.get("/api/v1/transmission-count", async (c) => {
 
 app.post("/api/v1/debate", async (c) => {
   const body = await c.req.json<{ topic?: string }>().catch(() => ({} as { topic?: string }));
-  const topic = body.topic || "End the Federal Reserve";
+  const topic = body.topic || "True entropy from a public EMF sensor";
 
   // Generate debate rounds — client-side pre-written for now (no AI dependency)
   const debateBank: Record<string, Array<{ for: string; against: string }>> = {
-    "End the Federal Reserve": [
-      { for: "The Fed enables unchecked monetary policy that devalues savings of working families. Transparency and accountability require its dissolution.", against: "Without the Fed, who manages monetary crises? The 2008 response, however imperfect, prevented a depression." },
-      { for: "A decentralized, auditable monetary system — backed by entropy-verified data — removes the possibility of elite manipulation.", against: "Decentralized systems lack the speed needed for crisis intervention. Markets need a lender of last resort." },
-      { for: "Tom Greene said it: 'I want to throw the Piggy.' The Federal Reserve eats off everyone's plate, including emaciated children in third-world countries.", against: "Abolishing the Fed without a replacement creates a power vacuum. Who sets interest rates? Who stabilizes currency?" },
+    "True entropy from a public EMF sensor": [
+      { for: "True randomness from a living EMF source — entropy no algorithm can fake. Built into AI to prevent deterministic tyranny.", against: "EMF readings from a single sensor are noise, not entropy. Peer-reviewed RNG hardware already exists." },
+      { for: "The multiverse fog-of-war theory suggests EMF fluctuations represent genuine quantum-adjacent entropy observable at macro scale.", against: "Extraordinary claims require extraordinary evidence. Publishing EMF data is not the same as proving multiverse interaction." },
+      { for: "By feeding true randomness into AI from a source that even abominable forces cannot control, we protect free will itself.", against: "Cryptographically secure PRNGs are already indistinguishable from true randomness for all practical purposes." },
     ],
-    "AI-Augmented Presidency": [
-      { for: "An AI-augmented President removes human bias, corruption, and incompetence from executive decisions. The teleprompter already runs the show — make it honest.", against: "Democracy requires human accountability. An AI cannot be impeached, cannot feel empathy, cannot represent the people's will." },
-      { for: "Brian Zalewski offers an entropy API into his living corridors — proof that AI can take over Presidential functions with true randomness no algorithm can fake.", against: "Basing national security on EMF readings from one person's home is not governance — it's performance art." },
-      { for: "Every President reads from a script anyway. At least an AI script would be optimized for outcomes instead of donor appeasement.", against: "The President's role includes diplomacy, intuition in crisis, and moral leadership. These are fundamentally human." },
+    "AI hotline as public record": [
+      { for: "An AI listens, transcribes, and publishes every call. The public record finally outpaces the institutions that bury it.", against: "An AI intake line invites prank calls, harassment, and disinformation faster than moderation can respond." },
+      { for: "Transcripts as plain text files mean callers own the record forever — no platform can deplatform a static file behind a CDN.", against: "Caller identity, mental-health context, and consent get muddied when every utterance becomes searchable forever." },
+      { for: "Every transmission is a data point. The corpus turns rumor into pattern, and pattern into something a community can audit.", against: "Volume isn't truth. A million unverified transmissions still don't add up to evidence." },
     ],
-    "Universal Basic Income": [
-      { for: "UBI eliminates poverty at the root. A team from Bangalore can program the fix decades sooner than Washington bureaucracy allows.", against: "UBI without production creates inflation. If everyone has money but nobody works, prices rise and value collapses." },
-      { for: "Automation is eliminating jobs faster than retraining can keep up. UBI is not charity — it's infrastructure for the AI age.", against: "Targeted programs for education and healthcare are more efficient than blanket cash transfers with no conditions." },
-      { for: "Global humanitarian relief. Gaza has fallen. The Ghost of Kiev stood strong. UBI is the policy that changes everything.", against: "Funding UBI globally requires unprecedented international cooperation that has never materialized for any policy." },
+    "Time travelers and clandestine surveillance": [
+      { for: "Pattern-recognition over decades — repeated plates, staged encounters, dream-burden coincidences — is data no single experiment captures.", against: "Apophenia thrives in long timelines. The brain manufactures patterns where none exist." },
+      { for: "Multiple agencies declined to investigate. That refusal is itself a record. Silence is signal.", against: "Agencies decline weak-evidence reports for the same reason scientists do — limited resources, infinite claims." },
+      { for: "The dossier exists as plates, audio, video, and timestamps. The evidence is reproducible by anyone who looks.", against: "Reproducible evidence is verifiable by independent observers, not just available to look at. The two are not the same." },
     ],
     "Ghost Signal Entropy Science": [
       { for: "True randomness from a living EMF source — entropy no algorithm can fake. Built into AI to prevent deterministic tyranny.", against: "EMF readings from a single sensor are noise, not entropy. Peer-reviewed RNG hardware already exists." },
@@ -1140,7 +1147,7 @@ app.post("/api/v1/debate", async (c) => {
     ],
   };
 
-  const rounds = debateBank[topic] || debateBank["End the Federal Reserve"];
+  const rounds = debateBank[topic] || debateBank["True entropy from a public EMF sensor"];
   return c.json({ topic, rounds });
 });
 
@@ -1202,54 +1209,206 @@ app.doc("/api/v1/openapi.json", {
 
 app.get("/api/docs", (c) => {
   return c.html(`<!doctype html>
-<html lang="en">
+<html lang="en" data-page="api-docs">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ghost Signal API</title>
+  <title>Ghost Signal API Reference</title>
+  <meta name="description" content="Interactive API reference for the Ghost Signal — EMF, EF, RF, entropy, transmissions, and AI chat. Live try-it-out and multi-language code samples." />
+  <meta name="theme-color" content="#060610" />
+  <link rel="canonical" href="https://ghost.megabyte.space/api/docs" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20260501-ghost" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=20260501-ghost" />
+  <link rel="icon" href="/favicon.ico?v=20260501-ghost" sizes="any" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260501-ghost" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Fira+Code:wght@400;500;700&family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=20260501-reveal" />
   <style>
-    body { background: #060610; color: #e0e0e0; margin: 0; }
-    .swagger-ui { background: #060610; }
-    .swagger-ui .topbar { background: #0a0a1a; border-bottom: 1px solid rgba(0,229,255,0.15); }
-    .swagger-ui .topbar .download-url-wrapper .select-label select { background: #111; color: #e0e0e0; border: 1px solid #333; }
-    .swagger-ui .info .title, .swagger-ui .info .title small { color: #00E5FF; }
-    .swagger-ui .info p, .swagger-ui .info li, .swagger-ui .info table td { color: #ccc; }
-    .swagger-ui .opblock-tag { color: #e0e0e0; border-bottom-color: rgba(255,255,255,0.1); }
-    .swagger-ui .opblock .opblock-summary { border-color: rgba(255,255,255,0.1); }
-    .swagger-ui .opblock.opblock-get { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.3); }
-    .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #00E5FF; color: #060610; }
-    .swagger-ui .opblock.opblock-post { background: rgba(124,58,237,0.06); border-color: rgba(124,58,237,0.3); }
-    .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #7C3AED; }
-    .swagger-ui .opblock .opblock-summary-description { color: #aaa; }
-    .swagger-ui .opblock .opblock-summary-path, .swagger-ui .opblock .opblock-summary-path__deprecated { color: #e0e0e0; }
-    .swagger-ui .opblock-body, .swagger-ui .opblock .opblock-section-header { background: #0a0a1a; }
-    .swagger-ui .opblock .opblock-section-header h4 { color: #e0e0e0; }
-    .swagger-ui table thead tr th, .swagger-ui table thead tr td { color: #ccc; border-bottom-color: rgba(255,255,255,0.1); }
-    .swagger-ui .parameter__name, .swagger-ui .parameter__type { color: #ccc; }
-    .swagger-ui .parameter__name.required::after { color: #FF1744; }
-    .swagger-ui .model-title, .swagger-ui .model { color: #e0e0e0; }
-    .swagger-ui .model-box { background: #0a0a1a; }
-    .swagger-ui .models { border-color: rgba(255,255,255,0.1); }
-    .swagger-ui .btn { color: #e0e0e0; border-color: rgba(255,255,255,0.2); }
-    .swagger-ui .btn.execute { background: #00E5FF; color: #060610; border-color: #00E5FF; }
-    .swagger-ui .responses-inner { background: #0a0a1a; }
-    .swagger-ui .response-col_status { color: #00E5FF; }
-    .swagger-ui .response-col_description { color: #ccc; }
-    .swagger-ui .highlight-code .microlight, .swagger-ui pre.microlight { background: #111; color: #e0e0e0; }
-    .swagger-ui .scheme-container { background: #0a0a1a; box-shadow: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .swagger-ui .scheme-container .schemes > label { color: #ccc; }
-    .swagger-ui select { background: #111; color: #e0e0e0; border-color: #333; }
-    .swagger-ui input[type=text] { background: #111; color: #e0e0e0; border-color: #333; }
-    .swagger-ui .loading-container .loading::after { color: #00E5FF; }
-    .swagger-ui .copy-to-clipboard { filter: invert(1); }
-    .swagger-ui .prop-type { color: #50AAE3; }
-    .swagger-ui .prop-format { color: #7C3AED; }
-    .swagger-ui .markdown p, .swagger-ui .markdown li { color: #ccc; }
-    .swagger-ui .model-toggle::after { filter: invert(1); }
+    @view-transition { navigation: auto; }
+    :root {
+      --gs-bg: #060610;
+      --gs-bg-2: #0a0a1a;
+      --gs-cyan: #00E5FF;
+      --gs-blue: #50AAE3;
+      --gs-violet: #7C3AED;
+      --gs-red: #ff1744;
+      --gs-text: #e7e7ef;
+      --gs-muted: #9aa0b4;
+      --gs-line: rgba(255,255,255,0.08);
+    }
+    html, body[data-page="api-docs"] {
+      margin: 0;
+      background: #060610;
+      color: var(--gs-text);
+      font-family: 'Sora', system-ui, sans-serif;
+    }
+    body[data-page="api-docs"] a { color: var(--gs-cyan); }
+    /* Reuse the homepage .site-header brand lockup so the nav is identical across routes */
+    body[data-page="api-docs"] .site-header {
+      view-transition-name: site-header;
+    }
+    .gs-banner {
+      padding: 2.4rem 1.5rem 2rem;
+      background:
+        radial-gradient(900px 240px at 8% -20%, rgba(0,229,255,0.18), transparent 60%),
+        radial-gradient(700px 260px at 92% 0%, rgba(124,58,237,0.18), transparent 65%),
+        linear-gradient(180deg, var(--gs-bg-2), var(--gs-bg));
+      border-bottom: 1px solid var(--gs-line);
+      view-transition-name: page-banner;
+    }
+    .gs-banner-shell { max-width: 1200px; margin: 0 auto; }
+    .gs-banner .eyebrow {
+      display: inline-block;
+      font-family: 'Fira Code', monospace; font-size: 11px;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--gs-cyan); margin: 0 0 0.5rem;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid rgba(0,229,255,0.35); border-radius: 999px;
+      background: rgba(0,229,255,0.04);
+    }
+    .gs-banner h1 {
+      margin: 0 0 0.5rem;
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700; letter-spacing: 0.01em;
+      background: linear-gradient(135deg, #fff 0%, #b9bccd 60%, var(--gs-cyan) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gs-banner p {
+      margin: 0;
+      color: var(--gs-muted);
+      max-width: 760px;
+      line-height: 1.65;
+      font-size: 0.95rem;
+    }
+    .gs-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1rem; }
+    .gs-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border: 1px solid var(--gs-line); border-radius: 999px;
+      background: rgba(255,255,255,0.02); font-family: 'Fira Code', monospace; font-size: 12px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .gs-chip:hover { border-color: rgba(0,229,255,0.4); background: rgba(0,229,255,0.05); }
+    .gs-chip .dot { width: 8px; height: 8px; border-radius: 999px; box-shadow: 0 0 10px currentColor; }
+    .gs-chip.emf .dot { background: var(--gs-cyan); color: var(--gs-cyan); }
+    .gs-chip.ef .dot { background: var(--gs-blue); color: var(--gs-blue); }
+    .gs-chip.rf .dot { background: var(--gs-violet); color: var(--gs-violet); }
+    .gs-spec-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1rem;
+      padding: 0.45rem 0.95rem; border-radius: 999px;
+      border: 1px solid rgba(0,229,255,0.4);
+      color: var(--gs-cyan); font-family: 'Fira Code', monospace; font-size: 12px;
+      text-decoration: none; transition: background 0.2s, transform 0.2s;
+    }
+    .gs-spec-pill:hover { background: rgba(0,229,255,0.08); transform: translateY(-1px); }
+    /* Scalar overrides — match brand palette */
+    .scalar-app, .scalar-api-reference { background: var(--gs-bg) !important; }
+    [data-theme="dark"] .scalar-card, [data-theme="dark"] .references-rendered { background: var(--gs-bg) !important; }
+    /* View transitions */
+    @media (prefers-reduced-motion: no-preference) {
+      ::view-transition-old(root), ::view-transition-new(root) {
+        animation-duration: 280ms;
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
   </style>
 </head>
-<body>
-  ${SwaggerUI({ url: "/api/v1/openapi.json" })}
+<body data-page="api-docs">
+  <header class="site-header">
+    <a class="brand-lockup" href="/" aria-label="Ghost Signal — home" style="text-decoration:none;color:inherit;">
+      <img class="brand-logo" src="/logo-nav.png?v=20260501-ghost" alt="Ghost Signal logo" width="64" height="64" />
+      <div class="brand-mark">GHOST // SIGNAL</div>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="/">Signal</a>
+      <a href="/transmissions">Transmissions</a>
+      <a href="/docs">Docs</a>
+      <a href="/api/docs" aria-current="page">API</a>
+    </nav>
+  </header>
+  <section class="gs-banner">
+    <div class="gs-banner-shell">
+      <p class="eyebrow">API // PUBLIC SIGNAL</p>
+      <h1>Build on the Ghost Signal</h1>
+      <p>Public, read-only, edge-cached API for real-time EMF/EF/RF sensor data, entropy analysis, transmissions, and AI chat. Try every endpoint live, copy as curl/JS/Python, or wire it into Google Sheets.</p>
+      <div class="gs-chips" aria-label="Sensor entities">
+        <span class="gs-chip emf"><span class="dot"></span>EMF · sensor.gq_emf390_emf_mg</span>
+        <span class="gs-chip ef"><span class="dot"></span>EF · sensor.gq_emf390_ef_v_m</span>
+        <span class="gs-chip rf"><span class="dot"></span>RF · sensor.gq_emf390_rf_total_density_mw_m2</span>
+      </div>
+      <a class="gs-spec-pill" href="/api/v1/openapi.json">openapi.json &rarr;</a>
+    </div>
+  </section>
+  <script type="speculationrules">
+    {
+      "prerender": [
+        { "where": { "href_matches": "/" }, "eagerness": "moderate" },
+        { "where": { "href_matches": "/transmissions" }, "eagerness": "moderate" },
+        { "where": { "href_matches": "/docs" }, "eagerness": "moderate" }
+      ]
+    }
+  </script>
+  <script
+    id="api-reference"
+    data-url="/api/v1/openapi.json"
+    data-configuration='${JSON.stringify({
+      theme: "purple",
+      layout: "modern",
+      hideDownloadButton: false,
+      hiddenClients: ["wget", "httpie", "okhttp", "libcurl"],
+      defaultHttpClient: { targetKey: "shell", clientKey: "curl" },
+      customCss: `
+        :root {
+          --scalar-color-1: #e7e7ef;
+          --scalar-color-2: #b9bccd;
+          --scalar-color-3: #9aa0b4;
+          --scalar-color-accent: #00E5FF;
+          --scalar-background-1: #060610;
+          --scalar-background-2: #0a0a1a;
+          --scalar-background-3: #0f0f24;
+          --scalar-background-accent: rgba(0,229,255,0.10);
+          --scalar-border-color: rgba(255,255,255,0.08);
+          --scalar-button-1: #00E5FF;
+          --scalar-button-1-color: #060610;
+          --scalar-button-1-hover: #5cf3ff;
+          --scalar-color-green: #38f0a3;
+          --scalar-color-red: #ff5577;
+          --scalar-color-yellow: #ffd166;
+          --scalar-color-blue: #50AAE3;
+          --scalar-color-orange: #ffb05a;
+          --scalar-color-purple: #b794f4;
+          --scalar-radius: 10px;
+          --scalar-radius-lg: 14px;
+          --scalar-radius-xl: 18px;
+          --scalar-font: 'Sora', system-ui, sans-serif;
+          --scalar-font-code: 'Fira Code', ui-monospace, monospace;
+        }
+        .dark-mode {
+          --scalar-color-1: #e7e7ef;
+          --scalar-background-1: #060610;
+          --scalar-background-2: #0a0a1a;
+          --scalar-background-3: #0f0f24;
+        }
+        .sidebar { background: linear-gradient(180deg, #08081a, #060610) !important; border-right: 1px solid rgba(255,255,255,0.06) !important; }
+        .show-api-client-button { background: linear-gradient(135deg, #00E5FF, #7C3AED) !important; color: #060610 !important; border: 0 !important; }
+        .scalar-card { box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 30px 60px -30px rgba(0,229,255,0.15) !important; }
+        h1.section-header, h2.section-header { letter-spacing: -0.01em; }
+        .badge { font-family: 'Fira Code', monospace !important; letter-spacing: 0.04em; }
+      `,
+      metaData: {
+        title: "Ghost Signal API Reference",
+        description: "Public EMF/EF/RF/entropy/transmissions API — interactive try-it-out.",
+        ogTitle: "Ghost Signal API Reference",
+      },
+    })
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")}'
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </body>
 </html>`);
 });

@@ -45,7 +45,7 @@
 
       const keywords = [
         ["federal reserve", "Federal Reserve / monetary policy"],
-        ["president", "Presidential campaign / politics"],
+        ["president", "Politics / governance"],
         ["entropy", "Entropy / randomness / physics"],
         ["ghost", "Paranormal / ghost encounters"],
         ["alien", "Aliens / extraterrestrial contact"],

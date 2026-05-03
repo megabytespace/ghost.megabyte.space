@@ -27,7 +27,6 @@ const copyRangeLinkEl = $("copy-range-link");
 const randomNumberEl = $("random-number");
 const randomMetaEl = $("random-meta");
 const safetyNoteEl = $("safety-note");
-const countdownEl = $("countdown");
 const timelineTrackEl = $("timeline-track");
 const timelineContainerEl = $("timeline-container");
 const timelineDetailEl = $("timeline-detail");
@@ -334,6 +333,8 @@ function drawChart(points) {
 function renderTimeline() {
   if (!timelineTrackEl || !state.timeline?.events) return;
   timelineTrackEl.replaceChildren();
+  // Track items so initTimelineReveal can observe newly created nodes
+  state.__timelineNeedsReveal = true;
 
   const events = [...state.timeline.events].sort((a, b) => new Date(a.date) - new Date(b.date));
   const now = new Date();
@@ -375,6 +376,11 @@ function renderTimeline() {
     item.append(dot, card);
     timelineTrackEl.append(item);
   });
+  initTimelineReveal();
+  // Hard fallback so no timeline items get stuck at opacity 0
+  setTimeout(() => {
+    document.querySelectorAll(".tl-item:not(.is-visible)").forEach((n) => n.classList.add("is-visible"));
+  }, 2500);
 }
 
 function selectTimelineEvent(index) {
@@ -537,7 +543,7 @@ async function loadSnapshotUtils() {
     ]);
     if (sheetsRes.ok) {
       const s = await sheetsRes.json();
-      if (sheetsFormulaEl) sheetsFormulaEl.textContent = s.importDataFormula;
+      if (sheetsFormulaEl) renderSheetsFormula(s.importDataFormula);
     }
     if (randomRes.ok) {
       const r = await randomRes.json();
@@ -548,6 +554,27 @@ async function loadSnapshotUtils() {
     if (sheetsFormulaEl) sheetsFormulaEl.textContent = "Export unavailable for this range.";
     if (randomNumberEl) randomNumberEl.textContent = "--";
   }
+}
+
+function renderSheetsFormula(formula) {
+  if (!sheetsFormulaEl || !formula) return;
+  const escapeHtml = (s) =>
+    String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const m = formula.match(/^(=)([A-Z_]+)(\()(["'])(.*?)\4(\))$/);
+  let html;
+  if (m) {
+    const [, eq, fn, lp, q, url, rp] = m;
+    const urlHtml = escapeHtml(url).replace(/(%[0-9A-Fa-f]{2})/g, '<span class="tok-pct">$1</span>');
+    html =
+      `<span class="tok-op">${escapeHtml(eq)}</span>` +
+      `<span class="tok-fn">${escapeHtml(fn)}</span>` +
+      `<span class="tok-punc">${escapeHtml(lp)}</span>` +
+      `<span class="tok-str">${escapeHtml(q)}${urlHtml}${escapeHtml(q)}</span>` +
+      `<span class="tok-punc">${escapeHtml(rp)}</span>`;
+  } else {
+    html = escapeHtml(formula);
+  }
+  sheetsFormulaEl.innerHTML = html;
 }
 
 /* ── Story Slider ── */
@@ -596,6 +623,109 @@ function initStorySlider() {
   // Pause on hover
   slider.addEventListener("mouseenter", () => clearInterval(autoTimer));
   slider.addEventListener("mouseleave", () => startAuto());
+}
+
+/* ── Avatar Frame Slideshow ── */
+
+function initAvatarSlideshow() {
+  const root = document.querySelector('[data-component="avatar-slideshow"]');
+  if (!root) return;
+
+  // Hydrate per-image caption attribute for the on-image overlay strip
+  root.querySelectorAll(".avatar-slide").forEach((slide) => {
+    const fig = slide.querySelector(".avatar-slide-figure");
+    const label = slide.querySelector(".avatar-frame-label")?.textContent.trim();
+    if (fig && label) fig.setAttribute("data-caption", label);
+  });
+
+  const slides = Array.from(root.querySelectorAll(".avatar-slide"));
+  const thumbs = Array.from(root.querySelectorAll("[data-slide-jump]"));
+  const counter = root.querySelector("[data-slide-counter]");
+  const prevBtn = root.querySelector("[data-slide-prev]");
+  const nextBtn = root.querySelector("[data-slide-next]");
+  const total = slides.length;
+  if (!total) return;
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const AUTO_DELAY = 6000;
+  let current = 0;
+  let autoTimer = null;
+
+  function goTo(index) {
+    current = ((index % total) + total) % total;
+    slides.forEach((s, i) => s.classList.toggle("is-active", i === current));
+    thumbs.forEach((t, i) => {
+      t.classList.toggle("is-active", i === current);
+      t.setAttribute("aria-selected", i === current ? "true" : "false");
+    });
+    if (counter) counter.textContent = `${current + 1} / ${total}`;
+    const activeThumb = thumbs[current];
+    if (activeThumb) activeThumb.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  function startAuto() {
+    if (reducedMotion) return;
+    stopAuto();
+    autoTimer = setInterval(next, AUTO_DELAY);
+  }
+  function stopAuto() {
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  }
+  function resetAuto() { stopAuto(); startAuto(); }
+
+  prevBtn?.addEventListener("click", () => { prev(); resetAuto(); });
+  nextBtn?.addEventListener("click", () => { next(); resetAuto(); });
+  thumbs.forEach((t, i) => {
+    t.addEventListener("click", () => { goTo(i); resetAuto(); });
+  });
+
+  root.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); next(); resetAuto(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); resetAuto(); }
+    else if (e.key === "Home") { e.preventDefault(); goTo(0); resetAuto(); }
+    else if (e.key === "End") { e.preventDefault(); goTo(total - 1); resetAuto(); }
+  });
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const stage = root.querySelector(".avatar-stage-frame") || root;
+  stage.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  stage.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) prev(); else next();
+      resetAuto();
+    }
+  }, { passive: true });
+
+  root.addEventListener("mouseenter", stopAuto);
+  root.addEventListener("mouseleave", startAuto);
+  root.addEventListener("focusin", stopAuto);
+  root.addEventListener("focusout", (e) => {
+    if (!root.contains(e.relatedTarget)) startAuto();
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) startAuto();
+      else stopAuto();
+    });
+  }, { threshold: 0.25 });
+  observer.observe(root);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAuto();
+    else startAuto();
+  });
+
+  goTo(0);
 }
 
 /* ── Polaroid Animation Indexing ── */
@@ -771,27 +901,461 @@ function initWaveform() {
 /* ── Scroll Reveal ── */
 
 function initScrollReveal() {
-  const sections = $$(".reveal-section");
-  if (!sections.length) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) {
+    document.documentElement.classList.remove("js-reveal-active");
+    return;
+  }
+
+  const universalSelector = [
+    ".reveal-section",
+    "main > section",
+    "main > article",
+    ".panel",
+    ".usecase-card",
+    ".family-card",
+    ".docs-sensor-chip",
+    ".dossier-card",
+    ".docs-example",
+    ".legal-section",
+    ".manifesto-frame",
+    ".entropy-section > *",
+  ].join(",");
+
+  const targets = Array.from(document.querySelectorAll(universalSelector));
+  targets.forEach((el, i) => {
+    if (!el.classList.contains("reveal")) el.classList.add("reveal");
+    if (!el.style.getPropertyValue("--reveal-delay")) {
+      const delay = Math.min(i * 35, 280);
+      el.style.setProperty("--reveal-delay", delay + "ms");
+    }
+  });
+
+  if (!targets.length) {
+    document.documentElement.classList.remove("js-reveal-active");
+    return;
+  }
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("is-revealed");
+          entry.target.classList.add("is-revealed", "is-visible");
           observer.unobserve(entry.target);
         }
       });
     },
-    { threshold: 0.08, rootMargin: "0px 0px -80px 0px" }
+    { threshold: 0.08, rootMargin: "0px 0px -60px 0px" }
   );
 
-  sections.forEach((s) => observer.observe(s));
+  targets.forEach((t) => observer.observe(t));
 
-  // Fallback: reveal any sections still hidden after 3s
   setTimeout(() => {
-    sections.forEach((s) => s.classList.add("is-revealed"));
-  }, 3000);
+    targets.forEach((t) => t.classList.add("is-revealed", "is-visible"));
+  }, 3500);
+}
+
+/* ── Plate Vault: hover-autoplay + click-to-lightbox ── */
+
+function initPlateVault() {
+  const cards = $$(".plate-vault-card");
+  if (!cards.length) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
+
+  cards.forEach((card) => {
+    const video = card.querySelector("video");
+    const img = card.querySelector("img");
+
+    // Hover autoplay for video tiles (skip on touch + reduced-motion)
+    if (video && !reduceMotion && !isCoarsePointer) {
+      const sourceEl = video.querySelector("source");
+      const srcUrl = sourceEl?.getAttribute("src");
+      let loaded = false;
+      const ensureLoaded = () => {
+        if (loaded || !srcUrl) return;
+        if (!video.querySelector("source[src]")) return;
+        loaded = true;
+        video.preload = "auto";
+        video.muted = true;
+        video.playsInline = true;
+        video.load();
+      };
+      const tryPlay = () => {
+        ensureLoaded();
+        video.muted = true;
+        const p = video.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      };
+      const stopPlay = () => {
+        try { video.pause(); video.currentTime = 0; } catch {}
+      };
+      card.addEventListener("pointerenter", tryPlay);
+      card.addEventListener("pointerleave", stopPlay);
+      card.addEventListener("focusin", tryPlay);
+      card.addEventListener("focusout", stopPlay);
+      // Hide native controls; the lightbox owns play UX
+      video.removeAttribute("controls");
+      video.setAttribute("tabindex", "-1");
+    }
+
+    // Click anywhere on card → lightbox
+    if (video || img) {
+      card.style.cursor = "zoom-in";
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      const open = (e) => {
+        e.preventDefault();
+        openPlateLightbox(card);
+      };
+      card.addEventListener("click", open);
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") open(e);
+      });
+    }
+  });
+}
+
+/* ── Plate Vault: cursor-tracked magnifier loupe over the merged grid ── */
+
+function initPlateLoupe() {
+  const wrap = document.querySelector(".plate-loupe-wrap");
+  const grid = document.getElementById("plate-vault-grid");
+  const loupe = document.getElementById("plate-loupe");
+  const clone = document.getElementById("plate-loupe-clone");
+  if (!wrap || !grid || !loupe || !clone) return;
+  if (window.matchMedia("(pointer: coarse)").matches) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const ZOOM = 5;
+  const SIZE = 360;
+  loupe.style.setProperty("--loupe-size", SIZE + "px");
+
+  let cloned = false;
+  let resizeRaf = 0;
+
+  const buildClone = () => {
+    clone.innerHTML = "";
+    const tree = grid.cloneNode(true);
+    tree.removeAttribute("id");
+    tree.classList.add("plate-vault-grid--clone");
+    tree.querySelectorAll("video").forEach((v) => {
+      const placeholder = document.createElement("img");
+      placeholder.src = v.poster || "";
+      placeholder.alt = "";
+      placeholder.decoding = "async";
+      placeholder.loading = "eager";
+      v.replaceWith(placeholder);
+    });
+    tree.querySelectorAll("img").forEach((img) => {
+      img.removeAttribute("loading");
+      img.decoding = "async";
+    });
+    tree.style.width = grid.offsetWidth + "px";
+    clone.appendChild(tree);
+    cloned = true;
+  };
+
+  const sync = () => {
+    if (!cloned) return;
+    const cloneTree = clone.firstElementChild;
+    if (cloneTree) cloneTree.style.width = grid.offsetWidth + "px";
+  };
+
+  const onMove = (e) => {
+    const rect = wrap.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+      loupe.classList.remove("is-active");
+      return;
+    }
+    if (!cloned) buildClone();
+    loupe.classList.add("is-active");
+    loupe.style.transform = `translate3d(${x - SIZE / 2}px, ${y - SIZE / 2}px, 0)`;
+    const cx = -(x * ZOOM - SIZE / 2);
+    const cy = -(y * ZOOM - SIZE / 2);
+    clone.style.transform = `translate3d(${cx}px, ${cy}px, 0) scale(${ZOOM})`;
+  };
+
+  const onLeave = () => loupe.classList.remove("is-active");
+
+  wrap.addEventListener("pointermove", onMove);
+  wrap.addEventListener("pointerleave", onLeave);
+  wrap.addEventListener("pointerenter", (e) => onMove(e));
+
+  window.addEventListener(
+    "resize",
+    () => {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(sync);
+    },
+    { passive: true },
+  );
+}
+
+function ensurePlateLightbox() {
+  let host = document.getElementById("plate-lightbox");
+  if (host) return host;
+  host = document.createElement("div");
+  host.id = "plate-lightbox";
+  host.className = "plate-lightbox";
+  host.setAttribute("role", "dialog");
+  host.setAttribute("aria-modal", "true");
+  host.setAttribute("aria-label", "License plate viewer");
+  host.hidden = true;
+  host.innerHTML = `
+    <button class="plate-lightbox-close" type="button" aria-label="Close (Esc)">×</button>
+    <button class="plate-lightbox-nav plate-lightbox-prev" type="button" aria-label="Previous (←)">‹</button>
+    <button class="plate-lightbox-nav plate-lightbox-next" type="button" aria-label="Next (→)">›</button>
+    <div class="plate-lightbox-stage"></div>
+    <div class="plate-lightbox-caption" aria-live="polite"></div>
+  `;
+  document.body.appendChild(host);
+
+  host.addEventListener("click", (e) => {
+    if (e.target === host) closePlateLightbox();
+  });
+  host.querySelector(".plate-lightbox-close").addEventListener("click", closePlateLightbox);
+  host.querySelector(".plate-lightbox-prev").addEventListener("click", () => stepPlateLightbox(-1));
+  host.querySelector(".plate-lightbox-next").addEventListener("click", () => stepPlateLightbox(1));
+
+  document.addEventListener("keydown", (e) => {
+    if (host.hidden) return;
+    if (e.key === "Escape") closePlateLightbox();
+    else if (e.key === "ArrowLeft") stepPlateLightbox(-1);
+    else if (e.key === "ArrowRight") stepPlateLightbox(1);
+  });
+  return host;
+}
+
+function getPlateCards() {
+  return $$(".plate-vault-card").filter((c) => c.querySelector("video, img"));
+}
+
+function openPlateLightbox(card) {
+  const host = ensurePlateLightbox();
+  const cards = getPlateCards();
+  const idx = cards.indexOf(card);
+  if (idx < 0) return;
+  host.dataset.index = String(idx);
+  host.hidden = false;
+  document.body.classList.add("plate-lightbox-open");
+  renderPlateLightbox();
+  host.querySelector(".plate-lightbox-close").focus();
+}
+
+function closePlateLightbox() {
+  const host = document.getElementById("plate-lightbox");
+  if (!host) return;
+  const stage = host.querySelector(".plate-lightbox-stage");
+  if (stage) stage.innerHTML = "";
+  host.hidden = true;
+  document.body.classList.remove("plate-lightbox-open");
+}
+
+function stepPlateLightbox(delta) {
+  const host = document.getElementById("plate-lightbox");
+  if (!host) return;
+  const cards = getPlateCards();
+  if (!cards.length) return;
+  let idx = Number(host.dataset.index || 0) + delta;
+  if (idx < 0) idx = cards.length - 1;
+  if (idx >= cards.length) idx = 0;
+  host.dataset.index = String(idx);
+  renderPlateLightbox();
+}
+
+function renderPlateLightbox() {
+  const host = document.getElementById("plate-lightbox");
+  if (!host) return;
+  const cards = getPlateCards();
+  const idx = Number(host.dataset.index || 0);
+  const card = cards[idx];
+  if (!card) return;
+  const stage = host.querySelector(".plate-lightbox-stage");
+  const caption = host.querySelector(".plate-lightbox-caption");
+  stage.innerHTML = "";
+
+  const sourceVideo = card.querySelector("video");
+  const sourceImg = card.querySelector("img");
+  if (sourceVideo) {
+    const src = sourceVideo.querySelector("source")?.getAttribute("src");
+    const poster = sourceVideo.getAttribute("poster") || "";
+    const v = document.createElement("video");
+    v.src = src || "";
+    v.poster = poster;
+    v.controls = true;
+    v.autoplay = true;
+    v.playsInline = true;
+    v.loop = true;
+    stage.appendChild(v);
+    const p = v.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } else if (sourceImg) {
+    const i = document.createElement("img");
+    i.src = sourceImg.currentSrc || sourceImg.src;
+    i.alt = sourceImg.alt || "";
+    stage.appendChild(i);
+  }
+
+  const labelEl = card.querySelector(".plate-vault-label");
+  caption.textContent = labelEl ? labelEl.textContent.trim() : "";
+}
+
+/* ── Generic Gallery Lightbox ── */
+
+function initGalleryLightbox() {
+  const triggers = $$("[data-zoomable][data-gallery]");
+  if (!triggers.length) return;
+
+  const groups = new Map();
+  triggers.forEach((img) => {
+    const key = img.getAttribute("data-gallery");
+    if (!key) return;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(img);
+  });
+
+  triggers.forEach((img) => {
+    img.style.cursor = "zoom-in";
+    img.setAttribute("tabindex", "0");
+    img.setAttribute("role", "button");
+    const open = (e) => {
+      e.preventDefault();
+      const key = img.getAttribute("data-gallery");
+      const list = groups.get(key) || [];
+      const idx = list.indexOf(img);
+      openGalleryLightbox(key, idx >= 0 ? idx : 0);
+    };
+    img.addEventListener("click", open);
+    img.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") open(e);
+    });
+  });
+
+  function captionFor(img) {
+    const fig = img.closest("figure");
+    const cap = fig?.querySelector("figcaption");
+    if (cap) return cap.textContent.trim();
+    const slide = img.closest(".avatar-slide");
+    if (slide) {
+      const label = slide.querySelector(".avatar-frame-label")?.textContent.trim();
+      const bullets = Array.from(slide.querySelectorAll(".avatar-slide-bullets li"))
+        .slice(0, 1)
+        .map((li) => li.textContent.trim());
+      return [label, ...bullets].filter(Boolean).join(" — ");
+    }
+    return img.getAttribute("alt") || "";
+  }
+
+  function ensureLightbox() {
+    let host = document.getElementById("gallery-lightbox");
+    if (host) return host;
+    host = document.createElement("div");
+    host.id = "gallery-lightbox";
+    host.className = "gallery-lightbox";
+    host.setAttribute("role", "dialog");
+    host.setAttribute("aria-modal", "true");
+    host.setAttribute("aria-label", "Image viewer");
+    host.hidden = true;
+    host.innerHTML = `
+      <button class="gallery-lightbox-close" type="button" aria-label="Close (Esc)">×</button>
+      <button class="gallery-lightbox-nav gallery-lightbox-prev" type="button" aria-label="Previous (←)">‹</button>
+      <button class="gallery-lightbox-nav gallery-lightbox-next" type="button" aria-label="Next (→)">›</button>
+      <div class="gallery-lightbox-stage"></div>
+      <div class="gallery-lightbox-caption" aria-live="polite"></div>
+      <div class="gallery-lightbox-counter" aria-live="polite"></div>
+    `;
+    document.body.appendChild(host);
+
+    host.addEventListener("click", (e) => { if (e.target === host) closeLightbox(); });
+    host.querySelector(".gallery-lightbox-close").addEventListener("click", closeLightbox);
+    host.querySelector(".gallery-lightbox-prev").addEventListener("click", () => step(-1));
+    host.querySelector(".gallery-lightbox-next").addEventListener("click", () => step(1));
+
+    document.addEventListener("keydown", (e) => {
+      if (host.hidden) return;
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowLeft") step(-1);
+      else if (e.key === "ArrowRight") step(1);
+      else if (e.key === "Home") jumpTo(0);
+      else if (e.key === "End") jumpTo((groups.get(host.dataset.group) || []).length - 1);
+    });
+
+    let touchStartX = 0;
+    host.addEventListener("touchstart", (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    host.addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) { dx > 0 ? step(-1) : step(1); }
+    }, { passive: true });
+
+    return host;
+  }
+
+  function openGalleryLightbox(group, index) {
+    const host = ensureLightbox();
+    host.dataset.group = group;
+    host.dataset.index = String(index);
+    host.hidden = false;
+    document.body.classList.add("gallery-lightbox-open");
+    render();
+    host.querySelector(".gallery-lightbox-close").focus();
+  }
+
+  function closeLightbox() {
+    const host = document.getElementById("gallery-lightbox");
+    if (!host) return;
+    host.querySelector(".gallery-lightbox-stage").innerHTML = "";
+    host.hidden = true;
+    document.body.classList.remove("gallery-lightbox-open");
+  }
+
+  function step(delta) {
+    const host = document.getElementById("gallery-lightbox");
+    if (!host) return;
+    const list = groups.get(host.dataset.group) || [];
+    if (!list.length) return;
+    let idx = Number(host.dataset.index || 0) + delta;
+    if (idx < 0) idx = list.length - 1;
+    if (idx >= list.length) idx = 0;
+    host.dataset.index = String(idx);
+    render();
+  }
+
+  function jumpTo(idx) {
+    const host = document.getElementById("gallery-lightbox");
+    if (!host) return;
+    host.dataset.index = String(idx);
+    render();
+  }
+
+  function render() {
+    const host = document.getElementById("gallery-lightbox");
+    const list = groups.get(host.dataset.group) || [];
+    const idx = Number(host.dataset.index || 0);
+    const img = list[idx];
+    if (!img) return;
+    const stage = host.querySelector(".gallery-lightbox-stage");
+    stage.innerHTML = "";
+    const big = document.createElement("img");
+    big.src = img.currentSrc || img.src;
+    big.alt = img.alt || "";
+    stage.appendChild(big);
+
+    // Preload neighbors
+    [idx - 1, idx + 1].forEach((n) => {
+      const norm = ((n % list.length) + list.length) % list.length;
+      const neighbor = list[norm];
+      if (neighbor) { const pre = new Image(); pre.src = neighbor.currentSrc || neighbor.src; }
+    });
+
+    host.querySelector(".gallery-lightbox-caption").textContent = captionFor(img);
+    host.querySelector(".gallery-lightbox-counter").textContent = `${idx + 1} / ${list.length}`;
+  }
 }
 
 /* ── Live Transmission Feed ── */
@@ -921,19 +1485,6 @@ async function loadFeed(isPolling) {
   }
 }
 
-/* ── Countdown ── */
-
-function updateCountdown() {
-  if (!countdownEl) return;
-  const target = new Date("2028-11-07T00:00:00-05:00");
-  const rem = target.getTime() - Date.now();
-  if (rem <= 0) { countdownEl.textContent = "Election Day has arrived."; return; }
-  const d = Math.floor(rem / 86400000);
-  const h = Math.floor((rem % 86400000) / 3600000);
-  const m = Math.floor((rem % 3600000) / 60000);
-  countdownEl.textContent = `${d}d ${h}h ${m}m`;
-}
-
 /* ── Refresh ── */
 
 async function refreshAll() {
@@ -951,14 +1502,15 @@ async function refreshAll() {
 /* ── Event Listeners ── */
 
 window.addEventListener("resize", () => drawChart(state.chartPoints));
-updateCountdown();
-setInterval(updateCountdown, 60000);
 initOrbs();
 initWaveform();
 initScrollReveal();
 initStorySlider();
 initAvatarSpread();
-initTimelineReveal();
+initAvatarSlideshow();
+initPlateVault();
+initPlateLoupe();
+initGalleryLightbox();
 
 if (document.body.dataset.page === "home") {
   Promise.all([loadMeta(), loadTimeline()])
@@ -1008,9 +1560,16 @@ if (document.body.dataset.page === "home") {
   copySheetsFormulaEl?.addEventListener("click", async () => {
     const formula = sheetsFormulaEl?.textContent;
     if (!formula) return;
+    const labelEl = copySheetsFormulaEl.querySelector("span");
     try {
       await navigator.clipboard.writeText(formula);
-      if (copySheetsStatusEl) copySheetsStatusEl.textContent = "Copied.";
+      if (copySheetsStatusEl) copySheetsStatusEl.textContent = "Copied to clipboard.";
+      copySheetsFormulaEl.classList.add("is-copied");
+      if (labelEl) labelEl.textContent = "Copied";
+      setTimeout(() => {
+        copySheetsFormulaEl.classList.remove("is-copied");
+        if (labelEl) labelEl.textContent = "Copy";
+      }, 1800);
     } catch {
       if (copySheetsStatusEl) copySheetsStatusEl.textContent = "Copy failed.";
     }
@@ -1052,6 +1611,10 @@ if (document.body.dataset.page === "home") {
     { threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
   );
   $$(".dossier-card").forEach((card) => dossierObserver.observe(card));
+  // Hard fallback so no dossier card stays at opacity 0
+  setTimeout(() => {
+    $$(".dossier-card:not(.is-visible)").forEach((c) => c.classList.add("is-visible"));
+  }, 3000);
 
   const duckObserver = new IntersectionObserver(
     (entries) => {
@@ -1113,13 +1676,10 @@ if (document.body.dataset.page === "home") {
 
     let ws = null;
     let mudConnected = false;
+    let mudOpened = false;
 
-    function connectMud() {
-      if (mudConnected) return;
-      mudConnected = true;
-      term.open(mudXtermEl);
+    function openSocket() {
       setMudStatus("Connecting", "mud-dot-pulse");
-
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       ws = new WebSocket(`${protocol}//${location.host}/ws/mud`);
       ws.binaryType = "arraybuffer";
@@ -1135,20 +1695,53 @@ if (document.body.dataset.page === "home") {
 
       ws.addEventListener("close", () => {
         setMudStatus("Disconnected", "mud-dot-dead");
-        term.write("\r\n\x1b[2m--- Connection closed. Refresh to reconnect. ---\x1b[0m\r\n");
+        term.write("\r\n\x1b[2m--- Connection closed. Click Reconnect to retry. ---\x1b[0m\r\n");
       });
 
       ws.addEventListener("error", () => {
         setMudStatus("Error", "mud-dot-dead");
       });
+    }
 
+    function reconnectMud() {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        try { ws.close(); } catch (_) { /* noop */ }
+      }
+      term.write("\r\n\x1b[2m--- Reconnecting... ---\x1b[0m\r\n");
+      openSocket();
+    }
+
+    function connectMud() {
+      if (mudConnected) return;
+      mudConnected = true;
+      if (!mudOpened) {
+        term.open(mudXtermEl);
+        mudOpened = true;
+      }
+      openSocket();
+
+      // Local echo — Avatar MUD operates in character mode without server-side echo,
+      // so we display each keystroke locally as we send it to the WebSocket.
       term.onData((data) => {
         if (ws && ws.readyState === WebSocket.OPEN) ws.send(data);
+        if (data === "\r") term.write("\r\n");
+        else if (data === "\x7f" || data === "\b") term.write("\b \b");
+        else if (data >= " " || data === "\t") term.write(data);
       });
 
       // Ensure clicking anywhere on the terminal container focuses xterm
-      mudXtermEl.addEventListener("click", () => term.focus());
+      const focusTerm = () => {
+        term.focus();
+        const ta = mudXtermEl.querySelector(".xterm-helper-textarea");
+        if (ta) ta.focus();
+      };
+      mudXtermEl.addEventListener("click", focusTerm);
+      mudXtermEl.addEventListener("touchstart", focusTerm, { passive: true });
+      mudXtermEl.addEventListener("focusin", focusTerm);
+      mudXtermEl.setAttribute("tabindex", "0");
       mudXtermEl.style.cursor = "text";
+      // Auto-focus once the terminal opens so keyboard input works without explicit click
+      setTimeout(focusTerm, 300);
     }
 
     // Lazy-connect: only open TCP when terminal scrolls into view
@@ -1162,6 +1755,15 @@ if (document.body.dataset.page === "home") {
       { rootMargin: "200px" },
     );
     mudObserver.observe(mudXtermEl);
+
+    const mudReconnectBtn = $("mud-reconnect");
+    mudReconnectBtn?.addEventListener("click", () => {
+      if (!mudOpened) {
+        connectMud();
+        return;
+      }
+      reconnectMud();
+    });
   }
 
   // Newsletter form

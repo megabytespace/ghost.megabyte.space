@@ -51,6 +51,14 @@ Thumbs.db
 # Asset workspace cruft
 public/.crop-backup/
 public/.tmp/
+public/.crop-plates.sh
+public/_orig_plates/
+public/logo-candidates/
+
+# Root-level scratch
+mud-terminal.png
+qa-temp.mjs
+test-mud.mjs
 
 # Misc local cruft
 *.bak

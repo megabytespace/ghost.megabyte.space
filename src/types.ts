@@ -2,6 +2,7 @@ export interface Env {
   ASSETS: Fetcher;
   RATE_LIMIT_KV?: KVNamespace;
   EMF_DB?: D1Database;
+  AI?: Ai;
   HASS_SERVER: string;
   HASS_TOKEN: string;
   MOCK_SENSOR_MODE?: string;

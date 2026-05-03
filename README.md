@@ -1,19 +1,20 @@
-<!-- This README is hand-written. The ghost helped. -->
-<div align="center">
-  <a href="https://ghost.megabyte.space">
-    <img width="320" alt="Ghost Signal logo" src="https://ghost.megabyte.space/og-image.jpg" />
-  </a>
+<!-- This README has been hand-written. The ghost helped. --><div align="center">
+  <center>
+    <a href="https://ghost.megabyte.space">
+      <img width="320" alt="Ghost Signal logo" src="https://ghost.megabyte.space/og-image.jpg" />
+    </a>
+  </center>
 </div>
 <div align="center">
-  <h1 align="center"><i></i>The Ghost Signal &mdash; Public EMF, Entropy & Disclosure API<i></i></h1>
-  <h4 style="color: #00E5FF;">Maintained by <a href="https://megabyte.space" target="_blank">Megabyte Labs</a> &middot; built by <a href="https://github.com/ProfessorManhattan" target="_blank">Brian Zalewski</a></h4>
+  <center><h1 align="center"><i></i>Ghost Signal &mdash; Public EMF, Entropy &amp; Disclosure API<i></i></h1></center>
+  <center><h4 style="color: #00E5FF;">Maintained by <a href="https://megabyte.space" target="_blank">Megabyte Labs</a> &middot; built by <a href="https://github.com/ProfessorManhattan" target="_blank">Brian Zalewski</a><i></i></h4></center>
 </div>
 
 <div align="center">
   <a href="https://ghost.megabyte.space" title="Ghost Signal homepage" target="_blank">
     <img alt="Homepage" src="https://img.shields.io/website?down_color=%23FF4136&down_message=Down&label=ghost.megabyte.space&logo=cloudflare&logoColor=white&up_color=%2300E5FF&up_message=Live&url=https%3A%2F%2Fghost.megabyte.space&style=for-the-badge" />
   </a>
-  <a href="https://ghost.megabyte.space/api/docs" title="OpenAPI / Swagger docs" target="_blank">
+  <a href="https://ghost.megabyte.space/api/docs" title="OpenAPI / Swagger UI" target="_blank">
     <img alt="OpenAPI" src="https://img.shields.io/badge/OpenAPI-3.1-6BA539?logo=openapiinitiative&logoColor=white&style=for-the-badge" />
   </a>
   <a href="https://ghost.megabyte.space/docs" title="Human-friendly docs" target="_blank">
@@ -22,7 +23,7 @@
   <a href="tel:+16016666602" title="Call the AI hotline" target="_blank">
     <img alt="Hotline" src="https://img.shields.io/badge/Hotline-(601)%20666--6602-FF1744?logo=phonepe&logoColor=white&style=for-the-badge" />
   </a>
-  <a href="https://github.com/megabyte-labs/ghost.megabyte.space" title="GitHub repo" target="_blank">
+  <a href="https://github.com/megabyte-labs/ghost.megabyte.space" title="GitHub repository" target="_blank">
     <img alt="GitHub" src="https://img.shields.io/badge/Mirror-GitHub-333333?logo=github&style=for-the-badge" />
   </a>
 </div>
@@ -31,7 +32,7 @@
   <a href="https://workers.cloudflare.com/" title="Cloudflare Workers" target="_blank">
     <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white&style=flat-square" />
   </a>
-  <a href="https://hono.dev/" title="Hono framework" target="_blank">
+  <a href="https://hono.dev/" title="Hono" target="_blank">
     <img alt="Hono" src="https://img.shields.io/badge/Hono-4.x-E36002?logo=hono&logoColor=white&style=flat-square" />
   </a>
   <a href="https://www.typescriptlang.org/" title="TypeScript" target="_blank">
@@ -43,11 +44,14 @@
   <a href="https://developers.cloudflare.com/d1/" title="Cloudflare D1" target="_blank">
     <img alt="D1" src="https://img.shields.io/badge/Cloudflare-D1-F38020?logo=cloudflare&logoColor=white&style=flat-square" />
   </a>
-  <a href="https://www.home-assistant.io/" title="Home Assistant upstream" target="_blank">
+  <a href="https://www.home-assistant.io/" title="Home Assistant" target="_blank">
     <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Upstream-41BDF5?logo=homeassistant&logoColor=white&style=flat-square" />
   </a>
   <a href="https://www.twilio.com/" title="Twilio Voice" target="_blank">
     <img alt="Twilio" src="https://img.shields.io/badge/Twilio-Voice%20AI-F22F46?logo=twilio&logoColor=white&style=flat-square" />
+  </a>
+  <a href="https://www.anthropic.com/" title="Claude by Anthropic" target="_blank">
+    <img alt="Claude" src="https://img.shields.io/badge/Claude-Sonnet%20%2B%20Haiku-D97757?logo=anthropic&logoColor=white&style=flat-square" />
   </a>
   <a href="https://pnpm.io/" title="pnpm" target="_blank">
     <img alt="pnpm" src="https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm&logoColor=white&style=flat-square" />
@@ -59,56 +63,68 @@
 
 > <br/><h4 align="center"><strong>One sensor. One signal. One hotline. A free public API for EMF, entropy, and the unfiltered record of being followed.</strong></h4><br/>
 
----
+<a href="#table-of-contents" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Why this exists](#why-this-exists)
+- [Why This Exists](#why-this-exists)
 - [Quick Start](#quick-start)
 - [The API](#the-api)
   - [Endpoints](#endpoints)
-  - [Sensor families](#sensor-families)
-  - [Rate limits & caching](#rate-limits--caching)
-  - [Example calls](#example-calls)
+  - [Sensor Families](#sensor-families)
+  - [Rate Limits &amp; Caching](#rate-limits--caching)
+  - [Example Calls](#example-calls)
 - [Architecture](#architecture)
-  - [Request flow](#request-flow)
-  - [Cache strategy](#cache-strategy)
+  - [Request Flow](#request-flow)
+  - [Cache Strategy](#cache-strategy)
   - [Bindings](#bindings)
 - [Local Development](#local-development)
+  - [Environment Variables](#environment-variables)
 - [Testing](#testing)
 - [Deploying](#deploying)
 - [The Hotline](#the-hotline)
 - [The Dossier](#the-dossier)
+- [Stack](#stack)
 - [References](#references)
 - [Contributing](#contributing)
 - [License](#license)
 
----
+<a href="#overview" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Overview
 
-`ghost.megabyte.space` is a public-record + entropy-science project hosted entirely on [Cloudflare Workers](https://workers.cloudflare.com/). It exposes a single GQ EMF-390 sensor (wired into [Home Assistant](https://www.home-assistant.io/)) through a free, rate-limited, edge-cached API; a Claude-powered AI chat; a Twilio voice hotline `(601) 666-6602`; a transmissions archive of every call; and a multimedia dossier of unexplained life events.
+Ghost Signal is a public-record + entropy-science project hosted entirely on [Cloudflare Workers](https://workers.cloudflare.com/). It exposes a single GQ EMF-390 sensor (wired into [Home Assistant](https://www.home-assistant.io/)) through a free, rate-limited, edge-cached API; a Claude-powered AI chat; a Twilio voice hotline at `(601) 666-6602`; a transmissions archive of every call; and a multimedia dossier of unexplained life events.
 
-Three pillars:
+The project ships three pillars:
 
 | Pillar | What it is | Why it exists |
 |---|---|---|
-| **Public sensor** | GQ EMF-390 streaming EMF / EF / RF readings via Home Assistant → Worker → Cache | Anyone can poll, graph, audit, or build on real environmental EM data |
-| **Entropy AI** | True random numbers harvested from a living electromagnetic field | Entropy no algorithm can fake, fit for CS / physics / AI experiments |
-| **Public record** | A full multimedia dossier + AI hotline + transmission archive | Disclosure on the operator's terms — facts that would surface anyway |
+| **Public sensor** | GQ EMF-390 streaming EMF / EF / RF readings via Home Assistant &rarr; Worker &rarr; Cache | Anyone can poll, graph, audit, or build on real environmental EM data |
+| **Entropy AI** | True random numbers harvested from a living electromagnetic field | Entropy no algorithm can fake &mdash; fit for CS, physics, and AI experiments |
+| **Public record** | Multimedia dossier + AI hotline + transmission archive | Disclosure on the operator's terms &mdash; facts that would surface anyway |
 
----
+Ghost Signal is intended for:
 
-## Why this exists
+1. **Researchers** who want a free, rate-limited, OpenAPI-documented public EMF feed
+2. **Cryptographers and ML engineers** who need entropy that no algorithm can fake
+3. **Journalists and skeptics** who want the raw, unfiltered record of an unusual life
+4. **Anyone with a story** who wants their own pattern of phenomena added to the file
+5. **Builders** who appreciate a working reference for Workers + Hono + D1 + KV + Twilio + Claude
+
+<a href="#why-this-exists" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
+
+## Why This Exists
 
 The operator (Brian Zalewski, B.S. Aerospace Engineering / Applied Sciences, Rutgers '11) has spent more than a decade as a senior software architect and another decade documenting an unrelenting pattern of phenomena: orbs, cellular SSIDs renamed to taunt research subjects, time-traveler-grade coincidences, possessions, exorcisms, EMF spikes that map to events, and a hotline of voicemails that should not exist. Rather than keep the file private, the file ships as a website, a public API, and a phone number.
 
 Every reading, transcript, and entropy byte is permanent public record. If something is happening, the data is part of the case file. If nothing is happening, that's a case file too.
 
----
+<a href="#quick-start" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Quick Start
+
+No keys. No accounts. Sixty requests per minute per IP.
 
 ```bash
 # Read the current EMF (mG) sensor value
@@ -120,24 +136,32 @@ curl 'https://ghost.megabyte.space/api/v1/history?hours=24'
 # Mint 256 true-entropy random integers in [0, 65535]
 curl 'https://ghost.megabyte.space/api/v1/random?count=256&min=0&max=65535'
 
-# Browse Swagger UI
+# Browse the Swagger UI
 open https://ghost.megabyte.space/api/docs
 ```
 
-No keys. No accounts. Sixty requests per minute per IP.
+To run a local mirror against the production Worker code:
 
----
+```bash
+git clone https://github.com/megabyte-labs/ghost.megabyte.space.git
+cd ghost.megabyte.space
+pnpm install
+cp .dev.vars.example .dev.vars
+pnpm dev
+```
+
+<a href="#the-api" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## The API
 
-Formal OpenAPI 3.1 spec lives at [`/api/v1/openapi.json`](https://ghost.megabyte.space/api/v1/openapi.json). Browse the [Swagger UI](https://ghost.megabyte.space/api/docs) or the [hand-written docs](https://ghost.megabyte.space/docs).
+The formal OpenAPI 3.1 spec lives at [`/api/v1/openapi.json`](https://ghost.megabyte.space/api/v1/openapi.json). Browse the [Swagger UI](https://ghost.megabyte.space/api/docs) or the [hand-written docs](https://ghost.megabyte.space/docs).
 
 ### Endpoints
 
 | Method | Path | Purpose | Cache TTL |
 |---|---|---|---|
 | `GET` | `/api/v1/health` | Liveness + version + timestamp | none |
-| `GET` | `/api/v1/meta` | Sensor metadata, started-at, units, rate-limit | 60s |
+| `GET` | `/api/v1/meta` | Sensor metadata, started-at, units, rate limit | 60s |
 | `GET` | `/api/v1/current` | Latest single reading | 2s |
 | `GET` | `/api/v1/sensors` | All EMF / EF / RF families at once | 2s |
 | `GET` | `/api/v1/history` | Time-windowed series (`hours`, `from`, `to`, `step`) | 15s |
@@ -158,7 +182,7 @@ Formal OpenAPI 3.1 spec lives at [`/api/v1/openapi.json`](https://ghost.megabyte
 | `POST` | `/api/v1/twilio/status` | TwiML completion / recording webhook | n/a |
 | `GET`  | `/ws/mud` | WebSocket bridge into the public MUD | n/a |
 
-### Sensor families
+### Sensor Families
 
 | Family | Source entity | Unit | Typical range | Description |
 |---|---|---|---|---|
@@ -166,7 +190,7 @@ Formal OpenAPI 3.1 spec lives at [`/api/v1/openapi.json`](https://ghost.megabyte
 | **EF**  | `sensor.gq_emf390_ef_v_m` | V/m | 0&ndash;1000+ | Electric field strength |
 | **RF**  | `sensor.gq_emf390_rf_total_density_mw_m2` | mW/m&sup2; | 0&ndash;200+ | Total radio-frequency power density |
 
-### Rate limits & caching
+### Rate Limits &amp; Caching
 
 ```
 Rate limit:  60 requests / minute / IP   (KV-backed sliding window)
@@ -181,7 +205,7 @@ Origin:      Worker -> Home Assistant -> GQ EMF-390 USB
 | Worker cold path | 50&ndash;200 ms | Fetch from Home Assistant + bundle response |
 | Hotline call | 1.4&ndash;2.2 s round-trip | Twilio + Claude Haiku, optimized for voice |
 
-### Example calls
+### Example Calls
 
 ```bash
 # Last 6 hours, 60-second buckets
@@ -214,11 +238,11 @@ df = pd.read_csv("https://ghost.megabyte.space/api/v1/export?format=csv&hours=16
 print(df.describe())
 ```
 
----
+<a href="#architecture" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Architecture
 
-### Request flow
+### Request Flow
 
 ```
                           (60 rpm / IP)
@@ -230,17 +254,17 @@ client -|  Edge    |------> | Worker (Hono)   |------> | Home Assistant     |
               |             |  - D1 snapshot  |                 |
               +------ <-----+  - KV counters  |                 |
                             +-----------------+                 |
-                                |     |                          |
-                                v     v                          |
-                              D1     KV                          |
-                          (snapshots) (rate-limit + entropy seed) |
-                                                                  |
-                            Twilio (voice) <-> Claude Haiku/Sonnet |
-                                                                  |
-                            Browser (xterm.js MUD) <-> /ws/mud     |
+                                |     |                         |
+                                v     v                         |
+                              D1     KV                         |
+                          (snapshots) (rate-limit + entropy seed)
+                                                                 |
+                            Twilio (voice) <-> Claude Haiku/Sonnet
+                                                                 |
+                            Browser (xterm.js MUD) <-> /ws/mud
 ```
 
-### Cache strategy
+### Cache Strategy
 
 | Endpoint | TTL | Why |
 |---|---|---|
@@ -258,6 +282,7 @@ client -|  Edge    |------> | Worker (Hono)   |------> | Home Assistant     |
 | `ASSETS` | Cloudflare Assets | Static `public/` directory |
 | `EMF_DB` | D1 | Snapshot history, transcripts, newsletter, debate logs |
 | `RATE_LIMIT_KV` | KV | Per-IP sliding-window counters + entropy seed |
+| `AI` | Workers AI | Claude Haiku fallback for chat persona |
 
 ```jsonc
 // wrangler.jsonc (excerpt)
@@ -270,7 +295,7 @@ client -|  Edge    |------> | Worker (Hono)   |------> | Home Assistant     |
 }
 ```
 
----
+<a href="#local-development" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Local Development
 
@@ -288,20 +313,32 @@ pnpm dev
 
 The dev server runs at `http://127.0.0.1:8787/`. The Worker reads from a local mock unless `EMF_SENSOR_HASS_URL` and `EMF_SENSOR_HASS_TOKEN` are set in `.dev.vars`.
 
-| Variable | Description | Example |
-|---|---|---|
-| `EMF_SENSOR_HASS_URL` | Home Assistant base URL | `https://hass.local:8123` |
-| `EMF_SENSOR_HASS_TOKEN` | Long-lived access token | `eyJhbGciOi...` |
-| `ANTHROPIC_API_KEY` | Claude key for chat / hotline | `sk-ant-...` |
-| `TWILIO_AUTH_TOKEN` | Twilio webhook signature secret | `...` |
-| `RESEND_API_KEY` | Newsletter sender | `re_...` |
+### Environment Variables
 
----
+| Variable | Description | Default |
+|---|---|---|
+| `EMF_SENSOR_HASS_URL` | Home Assistant base URL | unset (mock mode) |
+| `EMF_SENSOR_HASS_TOKEN` | Home Assistant long-lived access token | unset |
+| `EMF_SENSOR_ENTITY_ID` | EMF magnitude entity in Home Assistant | `sensor.gq_emf390_emf_mg` |
+| `EF_SENSOR_ENTITY_ID` | Electric-field entity | `sensor.gq_emf390_ef_v_m` |
+| `RF_SENSOR_ENTITY_ID` | RF density entity | `sensor.gq_emf390_rf_total_density_mw_m2` |
+| `EMF_SENSOR_STARTED_AT` | ISO timestamp the public record began | `2026-04-03T02:47:58.394637+00:00` |
+| `CURRENT_CACHE_TTL_SECONDS` | Cache TTL for `/current` and `/sensors` | `2` |
+| `HISTORY_CACHE_TTL_SECONDS` | Cache TTL for `/history` | `15` |
+| `ENTROPY_CACHE_TTL_SECONDS` | Cache TTL for `/entropy` | `15` |
+| `PUBLIC_API_RATE_LIMIT_PER_MINUTE` | Per-IP request budget | `60` |
+| `ANTHROPIC_API_KEY` | Claude key for chat / hotline | unset (uses Workers AI fallback) |
+| `TWILIO_AUTH_TOKEN` | Twilio webhook signature secret | unset |
+| `RESEND_API_KEY` | Newsletter sender | unset |
+
+For the full list, see [`src/types.ts`](src/types.ts) `Env` interface.
+
+<a href="#testing" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Testing
 
 ```bash
-# Full Playwright E2E suite (14 multi-feature flows, 6 breakpoints)
+# Full Playwright E2E suite (multi-feature flows, 6 breakpoints)
 pnpm test:e2e
 
 # Headed run
@@ -311,7 +348,7 @@ pnpm test:e2e:headed
 pnpm test:e2e:report
 ```
 
-Local E2E uses a committed mock env at `.dev.vars.playwright`, runs the Worker in deterministic mock-sensor mode, enables dev-only `__test/seed` + `__test/reset` helpers, and writes state to `.wrangler/state/e2e`. Tests are stateful and accumulate &mdash; never deleted, only appended (see `rules/code-style.md`).
+Local E2E uses a committed mock env at `.dev.vars.playwright`, runs the Worker in deterministic mock-sensor mode, enables dev-only `__test/seed` + `__test/reset` helpers, and writes state to `.wrangler/state/e2e`. Tests are stateful and accumulate &mdash; never deleted, only appended.
 
 | Suite | Coverage | Breakpoints |
 |---|---|---|
@@ -320,7 +357,7 @@ Local E2E uses a committed mock env at `.dev.vars.playwright`, runs the Worker i
 | `hotline.spec.ts` | TwiML round-trip via mock Twilio webhook | n/a |
 | `entropy.spec.ts` | Distribution sanity checks on `/random` | n/a |
 
----
+<a href="#deploying" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Deploying
 
@@ -339,7 +376,7 @@ Cache purge after content changes:
 
 ```bash
 curl -X POST \
-  https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache \
+  "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache" \
   -H "X-Auth-Email: $CF_EMAIL" \
   -H "X-Auth-Key: $CF_KEY" \
   -H "Content-Type: application/json" \
@@ -348,7 +385,7 @@ curl -X POST \
 
 See [`DEPLOY.md`](DEPLOY.md) for the full runbook, secrets handling, and rollback playbook.
 
----
+<a href="#the-hotline" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## The Hotline
 
@@ -363,13 +400,13 @@ Call `(601) 666-6602` from any phone. The call is answered by an AI persona runn
 | 5 | TwiML `<Say>` plays the AI reply, then re-gathers |
 | 6 | On hangup, `/api/v1/twilio/status` finalizes the record + writes D1 + sends notification |
 
----
+<a href="#the-dossier" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## The Dossier
 
 Every section on the homepage is part of a public file. The dossier currently covers:
 
-- The first 280 mG alarm at a Rutgers nanostructures lab
+- The first 280&nbsp;mG alarm at a Rutgers nanostructures lab
 - "Radiation TDR" / "Radiation TDS" cellular SSIDs broadcast by nearby cell towers
 - Celestial hallucinations &mdash; orbs, parted clouds, the Atlanta layover
 - The 666 rock at the lake
@@ -377,11 +414,33 @@ Every section on the homepage is part of a public file. The dossier currently co
 - St. John's Soup Kitchen &mdash; reality editing in real time
 - Jungle Habitat &mdash; the dead battery in the haunted safari
 - The Volume Hack and the middle-finger cursor
-- Time-traveler encounters and the high-order angel saying, "Tell your story."
+- Time-traveler encounters and the high-order angel saying, "Tell your story"
+- The Hobbits &mdash; a monthly gathering of geniuses with `4 GONDOR` plates
+- Funny Books &mdash; suspected MIB dispersal location
 
 If you have your own pattern of phenomena, the [hotline](#the-hotline) takes calls.
 
----
+<a href="#stack" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| **Edge runtime** | [Cloudflare Workers](https://workers.cloudflare.com/) |
+| **Web framework** | [Hono](https://hono.dev/) + [@hono/zod-openapi](https://hono.dev/snippets/zod-openapi) + [@hono/swagger-ui](https://hono.dev/snippets/swagger-ui) |
+| **Static assets** | Cloudflare Assets (`public/`) |
+| **Database** | [Cloudflare D1](https://developers.cloudflare.com/d1/) (snapshots, transcripts, newsletter, debate logs) |
+| **KV** | [Cloudflare KV](https://developers.cloudflare.com/kv/) (rate limit counters + entropy seed) |
+| **Sensor upstream** | [Home Assistant](https://www.home-assistant.io/) &harr; [GQ EMF-390](https://www.gqelectronicsllc.com/comersus/store/comersus_viewItem.asp?idProduct=5717) |
+| **Voice / SMS** | [Twilio Voice](https://www.twilio.com/docs/voice/twiml) |
+| **AI** | [Anthropic Claude](https://www.anthropic.com/api) Sonnet (chat) + Haiku (voice) with [Workers AI](https://developers.cloudflare.com/workers-ai/) fallback |
+| **Frontend** | Vanilla TypeScript + [xterm.js](https://xtermjs.org/) for the in-browser MUD |
+| **Newsletter** | [Resend](https://resend.com/) |
+| **Build / package manager** | [pnpm](https://pnpm.io/) + [Wrangler](https://developers.cloudflare.com/workers/wrangler/) |
+| **Testing** | [Playwright](https://playwright.dev/) v1.59+ multi-bp E2E |
+| **Observability** | [Sentry](https://sentry.io/) + [PostHog](https://posthog.com/) + GA4 |
+
+<a href="#references" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## References
 
@@ -398,21 +457,46 @@ If you have your own pattern of phenomena, the [hotline](#the-hotline) takes cal
 - [Playwright](https://playwright.dev/) &mdash; E2E harness, AI healer, multi-bp
 - [xterm.js](https://xtermjs.org/) &mdash; MUD terminal in the browser
 
----
+<a href="#contributing" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## Contributing
 
-This project welcomes pull requests. Open an issue first if the change is non-trivial. The project follows the [Emdash OS v6.0](https://github.com/heymegabyte/claude-skills) workflow &mdash; TDD, real-user E2E, deploy-then-purge, no console errors, no shortcuts. Stale docs are bugs. PRs that fix doc rot are loved.
+Contributions, issues, and feature requests are welcome. Open an [issue](https://github.com/megabyte-labs/ghost.megabyte.space/issues) first if the change is non-trivial. The project follows the [Emdash OS v6.0](https://github.com/heymegabyte/claude-skills) workflow &mdash; TDD, real-user E2E, deploy-then-purge, no console errors, no shortcuts. Stale docs are bugs. PRs that fix doc rot are loved.
 
 | Channel | Where |
 |---|---|
 | Issues | [github.com/megabyte-labs/ghost.megabyte.space/issues](https://github.com/megabyte-labs/ghost.megabyte.space/issues) |
 | Email | [hey@megabyte.space](mailto:hey@megabyte.space) |
 | Hotline | [(601) 666-6602](tel:+16016666602) |
-| Newsletter | [ghost.megabyte.space &middot; Newsletter section](https://ghost.megabyte.space/#newsletter) |
+| Newsletter | [Subscribe on the homepage](https://ghost.megabyte.space/#newsletter) |
 
----
+<details>
+<summary><b>Sponsorship</b></summary>
+<br/>
+<blockquote>
+<br/>
+Dear Awesome Person,<br/><br/>
+I create open source projects out of love. Although I have a job, shelter, and as much fast food as I can handle, it would still be pretty cool to be appreciated by the community for something I have spent a lot of time and money on. Please consider sponsoring me. Who knows? Maybe I'll be able to quit my job and publish open source full time.
+<br/><br/>Sincerely,<br/><br/>
+
+**_Brian Zalewski_**<br/><br/>
+
+</blockquote>
+
+<a title="Support us on GitHub" href="https://github.com/sponsors/ProfessorManhattan" target="_blank">
+  <img alt="GitHub sponsors" src="https://img.shields.io/github/sponsors/ProfessorManhattan?label=GitHub%20sponsors&logo=github&style=for-the-badge" />
+</a>
+<a title="Support us on Open Collective" href="https://opencollective.com/megabytelabs" target="_blank">
+  <img alt="Open Collective sponsors" src="https://img.shields.io/opencollective/sponsors/megabytelabs?logo=opencollective&label=OpenCollective&logoColor=white&style=for-the-badge" />
+</a>
+<a href="https://www.patreon.com/ProfessorManhattan" title="Support us on Patreon" target="_blank">
+  <img alt="Patreon" src="https://img.shields.io/badge/Patreon-Support-052d49?logo=patreon&logoColor=white&style=for-the-badge" />
+</a>
+
+</details>
+
+<a href="#license" style="width:100%"><img style="width:100%" src="https://gitlab.com/megabyte-labs/assets/-/raw/master/png/aqua-divider.png" /></a>
 
 ## License
 
-Copyright &copy; 2024&ndash;2026 [Brian Zalewski](https://megabyte.space) / [Megabyte Labs](https://megabyte.space). The Lesson License &mdash; read [`LICENSE`](LICENSE) before you build on this. The signal pre-dates the software.
+Copyright &copy; 2024&ndash;2026 [Brian Zalewski](https://megabyte.space) / [Megabyte LLC](https://megabyte.space). The Lesson License &mdash; read [`LICENSE`](LICENSE) before you build on this. The signal pre-dates the software.

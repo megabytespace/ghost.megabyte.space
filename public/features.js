@@ -355,7 +355,6 @@ const GhostFeatures = (() => {
       { id: "emf", label: "EMF Sensor", x: 400, y: 300, color: "#FF1744" },
       { id: "gondor", label: "4 GONDOR", x: 200, y: 150, color: "#7C3AED" },
       { id: "hobbits", label: "The Hobbits", x: 600, y: 150, color: "#7C3AED" },
-      { id: "joker", label: "Joker Laughter", x: 100, y: 400, color: "#00E5FF" },
       { id: "porcine", label: "Porcine Directive", x: 700, y: 400, color: "#FF1744" },
       { id: "cern", label: "CERN Question", x: 300, y: 500, color: "#7AFFAE" },
       { id: "radiation", label: "WiFi Radiation", x: 500, y: 500, color: "#FF6D00" },
@@ -370,10 +369,10 @@ const GhostFeatures = (() => {
 
     const connections = [
       ["emf", "radiation"], ["emf", "cern"], ["gondor", "hobbits"],
-      ["joker", "avatar"], ["porcine", "emf"], ["porcine", "666"],
+      ["porcine", "emf"], ["porcine", "666"],
       ["exorcism", "avatar"], ["phs06", "avatar"], ["cern", "crystal"],
       ["dream", "emf"], ["crop", "cern"], ["gondor", "porcine"],
-      ["666", "joker"], ["radiation", "phs06"], ["hobbits", "avatar"],
+      ["radiation", "phs06"], ["hobbits", "avatar"],
     ];
 
     function resize() {
@@ -510,7 +509,7 @@ const GhostFeatures = (() => {
 
   /* ═══════════════════════════════════════════════
      #6 — AI DEBATE ARENA
-     Two AI instances argue campaign positions live
+     Two AI instances argue Signal positions live
      ═══════════════════════════════════════════════ */
 
   function initDebate() {
@@ -742,8 +741,8 @@ const GhostFeatures = (() => {
   }
 
   /* ═══════════════════════════════════════════════
-     #9 — MUD CAMPAIGN HQ
-     Text adventure exploring the campaign as a game
+     #9 — MUD SIGNAL HQ
+     Text adventure exploring the Ghost Signal as a game
      ═══════════════════════════════════════════════ */
 
   function initCampaignHQ() {
@@ -755,14 +754,14 @@ const GhostFeatures = (() => {
 
     const rooms = {
       lobby: {
-        desc: "You stand in the lobby of the Ghost Signal Campaign Headquarters. A giant EMF sensor hums on the wall. Doors lead NORTH to the War Room, EAST to the Entropy Lab, and SOUTH to the Hotline Center.",
+        desc: "You stand in the lobby of the Ghost Signal Headquarters. A giant EMF sensor hums on the wall. Doors lead NORTH to the War Room, EAST to the Entropy Lab, and SOUTH to the Hotline Center.",
         exits: { north: "warroom", east: "lab", south: "hotline" },
-        items: ["campaign poster", "ghost sensor readings"],
+        items: ["signal poster", "ghost sensor readings"],
       },
       warroom: {
-        desc: "The War Room. Screens display live EMF data, conspiracy string boards, and a countdown to Election Day 2028. A portrait of Tom Greene hangs above the motto: 'I want to throw the Piggy.' Exits: SOUTH to Lobby, EAST to Dossier Vault.",
+        desc: "The War Room. Screens display live EMF data, conspiracy string boards, and a wall of plate sightings. A portrait of Tom Greene hangs above the motto: 'I want to throw the Piggy.' Exits: SOUTH to Lobby, EAST to Dossier Vault.",
         exits: { south: "lobby", east: "vault" },
-        items: ["federal reserve abolition plan", "UBI whitepaper"],
+        items: ["entropy roadmap", "porcine directive memo"],
       },
       lab: {
         desc: "The Entropy Lab. A GQ EMF-390 sensor sits in a Faraday cage, generating true random numbers from electromagnetic fluctuations. Monitors show real-time entropy calculations. A sign reads: 'No algorithm can fake this.' Exit: WEST to Lobby.",
@@ -856,8 +855,8 @@ const GhostFeatures = (() => {
         output.innerHTML = "";
         currentRoom = "lobby";
         inventory = [];
-        print("=== GHOST SIGNAL CAMPAIGN HQ ===", "hq-title");
-        print("A text adventure through the campaign. Type 'help' for commands.", "hq-subtitle");
+        print("=== GHOST SIGNAL HQ ===", "hq-title");
+        print("A text adventure through the Signal. Type 'help' for commands.", "hq-subtitle");
         print("---");
         look();
         input.focus();
@@ -888,7 +887,6 @@ const GhostFeatures = (() => {
       { title: "The Crop Circle", body: "Found hiking in an unusual direction with a friend who got a royal flush.", severity: 5 },
       { title: "Dream Burden", body: "Bizarre dreams. A shaggy ghost dog. Unsettling physical sensations.", severity: 4 },
       { title: "The CERN Question", body: "A scientist headed to CERN described teleportation as already possible.", severity: 5 },
-      { title: "Joker Laughter", body: "Chaotic, theatrical, spiritually charged cackling in a white chariot.", severity: 5 },
       { title: "Porcine Directive", body: "He broke D.C.'s Porcine Directive — and the haunting started.", severity: 5 },
       { title: "The Volume Hack", body: "A hacker remotely adjusting the computer's volume. Nobody else in the room.", severity: 4 },
       { title: "WiFi Radiation", body: "WiFi SSID renamed to 'Radiation TDR' — related to research at Rutgers.", severity: 5 },
@@ -971,62 +969,6 @@ const GhostFeatures = (() => {
         renderCard();
       }
     });
-  }
-
-  /* ═══════════════════════════════════════════════
-     #11 — LIVE CALL TRANSCRIPT THEATER
-     Real-time typing animation of incoming calls
-     ═══════════════════════════════════════════════ */
-
-  function initTranscriptTheater() {
-    const theater = $("transcript-theater");
-    if (!theater) return;
-    const display = theater.querySelector(".theater-display");
-    const statusEl = theater.querySelector(".theater-status");
-    if (!display) return;
-
-    let lastId = null;
-    let typing = false;
-
-    async function pollTranscripts() {
-      try {
-        const r = await fetch("/api/v1/transmissions/live?limit=1");
-        const data = await r.json();
-        if (data.entries?.length > 0) {
-          const latest = data.entries[0];
-          if (latest.id !== lastId && !typing) {
-            lastId = latest.id;
-            await typeText(latest);
-          }
-        }
-      } catch {}
-    }
-
-    async function typeText(entry) {
-      typing = true;
-      if (statusEl) statusEl.textContent = "LIVE TRANSMISSION INCOMING...";
-      display.innerHTML = "";
-
-      const header = el("div", "theater-header");
-      header.textContent = `${entry.source === "call" ? "CALL" : "CHAT"} — ${new Date(entry.created_at).toLocaleTimeString()}`;
-      display.appendChild(header);
-
-      const textEl = el("div", "theater-text");
-      display.appendChild(textEl);
-
-      const text = entry.transcript || entry.message || "...";
-      for (let i = 0; i < text.length; i++) {
-        textEl.textContent += text[i];
-        display.scrollTop = display.scrollHeight;
-        await new Promise((r) => setTimeout(r, 30 + Math.random() * 50));
-      }
-
-      if (statusEl) statusEl.textContent = "TRANSMISSION COMPLETE";
-      typing = false;
-    }
-
-    setInterval(pollTranscripts, 8000);
-    pollTranscripts();
   }
 
   /* ═══════════════════════════════════════════════
@@ -1176,18 +1118,18 @@ const GhostFeatures = (() => {
     if (!mapContainer) return;
 
     const states = [
-      { abbr: "NJ", name: "New Jersey", ev: 14, relevance: "Campaign HQ. Morristown — Washington's second winter encampment. Ground zero.", x: 82, y: 35 },
+      { abbr: "NJ", name: "New Jersey", ev: 14, relevance: "Signal origin. Morristown — Washington's second winter encampment. Ground zero.", x: 82, y: 35 },
       { abbr: "NY", name: "New York", ev: 28, relevance: "Church of God cult meeting. 4 GONDOR spotted en route.", x: 80, y: 28 },
       { abbr: "PA", name: "Pennsylvania", ev: 19, relevance: "4 GONDOR — Pennsylvania plate on a Kia Stinger.", x: 76, y: 35 },
       { abbr: "MA", name: "Massachusetts", ev: 11, relevance: "Cousin first mentioned 4 GONDOR. Family signal hub.", x: 88, y: 26 },
-      { abbr: "DC", name: "Washington D.C.", ev: 3, relevance: "The Porcine Directive. The Federal Reserve. The target.", x: 78, y: 40 },
-      { abbr: "CA", name: "California", ev: 54, relevance: "Tech capital. AI-augmented Presidency starts here.", x: 12, y: 40 },
-      { abbr: "TX", name: "Texas", ev: 40, relevance: "Energy independence. Fed opposition stronghold.", x: 40, y: 60 },
-      { abbr: "FL", name: "Florida", ev: 30, relevance: "Swing state. UBI resonance highest here.", x: 75, y: 68 },
-      { abbr: "OH", name: "Ohio", ev: 17, relevance: "Rust belt. Workers against the Fed.", x: 70, y: 38 },
+      { abbr: "DC", name: "Washington D.C.", ev: 3, relevance: "The Porcine Directive. The agencies that did not call back.", x: 78, y: 40 },
+      { abbr: "CA", name: "California", ev: 54, relevance: "Tech capital. Where entropy science actually gets built.", x: 12, y: 40 },
+      { abbr: "TX", name: "Texas", ev: 40, relevance: "Energy independence. Strong opinions on monetary entropy.", x: 40, y: 60 },
+      { abbr: "FL", name: "Florida", ev: 30, relevance: "Anomaly density off the charts. Plates on plates on plates.", x: 75, y: 68 },
+      { abbr: "OH", name: "Ohio", ev: 17, relevance: "Rust belt resonance. Hotline calls cluster here.", x: 70, y: 38 },
       { abbr: "MS", name: "Mississippi", ev: 6, relevance: "601 area code. The hotline's home state.", x: 58, y: 58 },
-      { abbr: "IL", name: "Illinois", ev: 19, relevance: "Lincoln's state. Entropy meets politics.", x: 58, y: 36 },
-      { abbr: "GA", name: "Georgia", ev: 16, relevance: "Swing state. Digital infrastructure hub.", x: 70, y: 55 },
+      { abbr: "IL", name: "Illinois", ev: 19, relevance: "Lincoln's state. Entropy meets infrastructure.", x: 58, y: 36 },
+      { abbr: "GA", name: "Georgia", ev: 16, relevance: "Sub-tropical anomalies. Digital infrastructure hub.", x: 70, y: 55 },
     ];
 
     let totalVotes = 0;
@@ -1318,6 +1260,68 @@ const GhostFeatures = (() => {
   }
 
   /* ═══════════════════════════════════════════════
+     AVATAR FRAME SLIDESHOW
+     ═══════════════════════════════════════════════ */
+
+  function initAvatarSlideshow() {
+    const root = document.querySelector('[data-component="avatar-slideshow"]');
+    if (!root) return;
+    const slides = Array.from(root.querySelectorAll('.avatar-slide'));
+    const thumbs = Array.from(root.querySelectorAll('[data-slide-jump]'));
+    const counter = root.querySelector('[data-slide-counter]');
+    const prevBtn = root.querySelector('[data-slide-prev]');
+    const nextBtn = root.querySelector('[data-slide-next]');
+    if (!slides.length) return;
+
+    let index = 0;
+
+    function go(next) {
+      const target = (next + slides.length) % slides.length;
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('is-active', i === target);
+      });
+      thumbs.forEach((thumb, i) => {
+        const active = i === target;
+        thumb.classList.toggle('is-active', active);
+        thumb.setAttribute('aria-selected', active ? 'true' : 'false');
+        if (active) {
+          thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      });
+      if (counter) counter.textContent = `${target + 1} / ${slides.length}`;
+      index = target;
+    }
+
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener('click', () => {
+        const i = parseInt(thumb.getAttribute('data-slide-jump'), 10);
+        if (!Number.isNaN(i)) go(i);
+      });
+    });
+    if (prevBtn) prevBtn.addEventListener('click', () => go(index - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => go(index + 1));
+
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(index - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1); }
+      if (e.key === 'Home') { e.preventDefault(); go(0); }
+      if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+    });
+    root.tabIndex = 0;
+
+    let touchStart = null;
+    root.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientX; }, { passive: true });
+    root.addEventListener('touchend', (e) => {
+      if (touchStart == null) return;
+      const dx = e.changedTouches[0].clientX - touchStart;
+      if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
+      touchStart = null;
+    }, { passive: true });
+
+    if (counter) counter.textContent = `1 / ${slides.length}`;
+  }
+
+  /* ═══════════════════════════════════════════════
      INIT ALL
      ═══════════════════════════════════════════════ */
 
@@ -1332,10 +1336,31 @@ const GhostFeatures = (() => {
     initCasino();
     initCampaignHQ();
     initCardShuffle();
-    initTranscriptTheater();
     initGlitchArt();
     initElectionMap();
     initPossessionSequence();
+    initAvatarSlideshow();
+    initRockScene();
+  }
+
+  function initRockScene() {
+    const scenes = document.querySelectorAll('[data-component="rock-scene"]');
+    if (!scenes.length) return;
+    scenes.forEach((scene) => {
+      const btn = scene.querySelector('[data-action="rock-scene-replay"]');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        scene.classList.remove('is-replaying');
+        void scene.offsetWidth;
+        scene.classList.add('is-replaying');
+        scene.addEventListener('animationend', function handler(e) {
+          if (e.animationName === 'rock-sky' || e.animationName === 'rock-graffiti') {
+            scene.classList.remove('is-replaying');
+            scene.removeEventListener('animationend', handler);
+          }
+        });
+      });
+    });
   }
 
   return { init };

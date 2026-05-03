@@ -23,6 +23,9 @@
       "id": "f6d3c1a029cc43e999c782dbdc7be286"
     }
   ],
+  "ai": {
+    "binding": "AI"
+  },
   "routes": [
     {
       "pattern": "ghost.megabyte.space",

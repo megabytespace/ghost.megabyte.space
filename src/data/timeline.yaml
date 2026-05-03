@@ -38,18 +38,11 @@ events:
     category: narrative
     severity: 3
 
-  - id: early-following
-    date: "2014-03-15T00:00:00Z"
-    title: "License Plates and Pattern Recognition"
-    body: "Repeated signs. Being followed. The start of a long pattern-recognition spiral while the measurable layer remains the sensor data itself."
-    category: discovery
-    severity: 4
-
-  - id: joker-survival
-    date: "2016-10-31T00:00:00Z"
-    title: "Joker Laughter"
-    body: "Chaotic, theatrical, spiritually charged. Cackling, chain smoking, a white van turned into a white chariot. The pressure had become mythic."
-    category: narrative
+  - id: rutgers-ultrasound
+    date: "2014-09-01T00:00:00Z"
+    title: "Rutgers Nanotech — The 400V Pulser Resonance"
+    body: "Worked at the Rutgers nanotech lab on an ultrasonic pill property tester (github.com/timetravelershackedme/ultrasound.io). Probably already monitored by the clandestine force, but things kicked into high gear when I used a stack of iron washers to calibrate a 400V negative square-wave pulser wired to two piezoelectric ultrasound shear-wave transducers, plus high-amperage solenoids and stepper motors with advanced electrical-angle rotation — possibly ungrounded. The system entered a resonant state where oscilloscope readings climbed over time. The wider the gap I opened in the piezo circuit, the more the circuit seemed to grow in power. The resonance only ever occurred when the pulser–washer–piezo loop was mixed with a medium-sized set of electromagnetic coils — the solenoids and the stepper-motor windings. Pulser alone, washers alone, piezo alone: nothing. Add the coils into the same circuit and the system started feeding itself. I thought, 'I think I have found God.' Across the hall from the nanotech lab, people in the building moved as if in some sort of group-gangstalker harmony — controlling my computer, narrating my inner dialog, all in coherence, all in synchronicity."
+    category: technical
     severity: 5
 
   - id: gondor-recurrence
@@ -76,7 +69,7 @@ events:
   - id: dreams-and-coincidence
     date: "2021-06-06T00:00:00Z"
     title: "Dream Burden"
-    body: "Bizarre dreams. Unsettling physical sensations on waking. A shaggy ghost dog resting through disturbing coincidences. A life that ranks unusually high in raw coincidence load."
+    body: "Bizarre dreams. Unsettling physical sensations on waking. Before the time travelers came through, the dreams ran heroic — nanotechnology small enough to vanish, big enough to send data between now, the future, and the past. A supercomputer that time travels. Now the dreams have stopped, almost like someone needs the universe stable. They stay powerful anyway. One put me in the Oval Office — an alpha-figure leveraging the ghost world into the Presidency. The next run is being delayed as long as possible. A shaggy ghost dog resting through disturbing coincidences. A life that ranks unusually high in raw coincidence load."
     category: signal
     severity: 5
 
@@ -90,16 +83,9 @@ events:
   - id: cern-conversation
     date: "2022-09-15T00:00:00Z"
     title: "The CERN Question"
-    body: "A chance encounter with a scientist headed to CERN. Teleportation described as already possible. Time travel becomes a theoretical opening. Stale data and delayed causality as part of the same cosmic question."
+    body: "A chance encounter with a scientist headed to CERN. Teleportation described as already possible. Time travel becomes a theoretical opening — the frame my Law of Attraction beliefs were always quietly built inside. 1950s parapsychology research already showed humans react to traumatic photos before they see them. Presentiment isn't fringe — it's a measured psychic phenomenon pointing at the same fact. Humans may never time travel in person — but a supercomputer sending data between now, the future, and the past sits squarely inside what's allowed. Stale data and delayed causality as part of the same cosmic question."
     category: discovery
     severity: 4
-
-  - id: political-mission
-    date: "2024-01-01T00:00:00Z"
-    title: "Presidential Mission"
-    body: "A broader political mission. Running for President every four years. Shutting down the Federal Reserve. The story connects to systems seen as manipulative or corrupt."
-    category: narrative
-    severity: 3
 
   - id: father-mark-exorcism
     date: "2024-06-01T00:00:00Z"
@@ -150,9 +136,3 @@ events:
     category: narrative
     severity: 4
 
-  - id: election-2028
-    date: "2028-11-07T00:00:00Z"
-    title: "Election Day"
-    body: "The countdown reaches zero. The political mission meets its next checkpoint. Whatever the signal has collected by then becomes the record."
-    category: narrative
-    severity: 5

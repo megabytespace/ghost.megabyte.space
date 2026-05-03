@@ -15,19 +15,28 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ghost.megabyte.space/docs" />
-    <meta property="og:image" content="https://ghost.megabyte.space/og-image.png" />
+    <meta property="og:image" content="https://ghost.megabyte.space/og-image.jpg?v=20260501-666" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <link rel="canonical" href="https://ghost.megabyte.space/docs" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20260501-ghost" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=20260501-ghost" />
+    <link rel="icon" href="/favicon.ico?v=20260501-ghost" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260501-ghost" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#060610" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260501-reveal" />
+    <script>
+      (function () {
+        try {
+          var rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+          if (!rm || !rm.matches) document.documentElement.classList.add('js-reveal-active');
+        } catch (e) {}
+      })();
+    </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,37 +64,51 @@
     <canvas class="orb-canvas" id="orb-canvas" aria-hidden="true"></canvas>
 
     <header class="site-header">
-      <div class="brand-lockup">
-        <img class="brand-logo" src="/logo-b.png" alt="Ghost Signal logo" width="40" height="40" />
+      <a class="brand-lockup" href="/" aria-label="Ghost Signal — home" style="text-decoration:none;color:inherit;">
+        <img class="brand-logo" src="/logo-nav.png?v=20260501-ghost" alt="Ghost Signal logo" width="64" height="64" />
         <div class="brand-mark">GHOST // SIGNAL</div>
-      </div>
+      </a>
       <nav class="site-nav" aria-label="Primary">
         <a href="/">Signal</a>
         <a href="/transmissions">Transmissions</a>
         <a href="/docs" aria-current="page">Docs</a>
         <a href="/api/docs">API</a>
-        <a href="tel:+16016666602" class="nav-hotline">666</a>
       </nav>
     </header>
+    <script type="speculationrules">
+    {
+      "prerender": [
+        { "where": { "href_matches": "/" }, "eagerness": "moderate" },
+        { "where": { "href_matches": "/transmissions" }, "eagerness": "moderate" },
+        { "where": { "href_matches": "/api/docs" }, "eagerness": "moderate" }
+      ]
+    }
+    </script>
 
     <main id="main" class="shell docs-layout">
       <section class="docs-hero panel">
-        <p class="eyebrow">Developer docs</p>
+        <p class="eyebrow">Developer docs · v1</p>
         <h1 class="glitch-text" data-text="Build on the Ghost Signal."><span class="gradient-text">Build on the Ghost Signal.</span></h1>
         <p class="lede">
           Public, read-only, edge-cached API. Three sensor axes (EMF, EF, RF), live transmission feed,
           entropy analysis, AI chat, newsletter, and reproducible random numbers derived from electromagnetic phenomena.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="/api/docs">Open Swagger UI</a>
-          <a class="button button-secondary" href="/api/v1/openapi.json">OpenAPI JSON</a>
-          <a class="button button-ghost" href="#endpoints">Endpoints</a>
+          <a class="button button-primary" href="/api/docs">Open Interactive Reference →</a>
+          <a class="button button-secondary" href="#quickstart">Quickstart</a>
+          <a class="button button-ghost" href="/api/v1/openapi.json">openapi.json</a>
         </div>
+        <ul class="docs-hero-stats" aria-label="API capabilities at a glance">
+          <li><strong>3</strong><span>sensor axes</span></li>
+          <li><strong>16+</strong><span>endpoints</span></li>
+          <li><strong>1/min</strong><span>D1 snapshots</span></li>
+          <li><strong>0</strong><span>auth required</span></li>
+        </ul>
       </section>
 
       <section class="panel docs-base-url">
         <p class="eyebrow">Base URL</p>
-        <pre class="docs-url-block"><code>https://ghost.megabyte.space</code></pre>
+        <pre class="docs-url-block"><code><span class="tok-str">https://ghost.megabyte.space</span></code></pre>
         <div class="docs-sensor-grid">
           <div class="docs-sensor-chip docs-sensor-emf">
             <span class="docs-sensor-dot"></span>
@@ -111,273 +134,104 @@
 
       <hr class="section-divider" aria-hidden="true" />
 
-      <section id="endpoints">
-        <div class="panel-copy shell" style="margin-bottom: 1.5rem;">
-          <p class="eyebrow">Endpoints</p>
-          <h2><span class="gradient-text">Sensor Data</span></h2>
-        </div>
-
-        <div class="docs-grid shell">
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/sensors</h2>
-            </div>
-            <p>All three sensor readings in one request. Best for dashboards showing EMF, EF, and RF together.</p>
-            <pre><code>{
-  "emf": {
-    "entityId": "sensor.gq_emf390_emf_mg",
-    "numericValue": 0.8,
-    "unit": "mG",
-    "friendlyName": "EMF Milligauss",
-    "sampledAt": "2026-04-23T22:00:00.000Z"
-  },
-  "ef": { "numericValue": 2.1, "unit": "V/m", ... },
-  "rf": { "numericValue": 0.003, "unit": "mW/m²", ... },
-  "sampledAt": "2026-04-23T22:00:00.000Z"
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/current</h2>
-            </div>
-            <p>Single EMF sensor reading. Best endpoint for simple polling.</p>
-            <pre><code>{
-  "entityId": "sensor.gq_emf390_emf_mg",
-  "numericValue": 0.8,
-  "unit": "mG",
-  "sampledAt": "2026-04-23T22:00:00.000Z"
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/history</h2>
-            </div>
-            <p>Time-series points for charts. Supports <code>start</code>, <code>end</code>, <code>targetPoints</code> params.</p>
-            <pre><code>{
-  "entityId": "sensor.gq_emf390_emf_mg",
-  "rawPointCount": 15421,
-  "displayPointCount": 960,
-  "points": [
-    { "timestamp": "2026-04-23T21:10:00.000Z", "value": 0.38 }
-  ]
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/entropy</h2>
-            </div>
-            <p>Shannon entropy derived from sensor readings. Params: <code>start</code>, <code>end</code>, <code>bins</code>.</p>
-            <pre><code>{
-  "entropyBits": 3.271447,
-  "sampleCount": 960,
-  "windowMinutes": 29832,
-  "bins": 24
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/meta</h2>
-            </div>
-            <p>Public metadata: history mode, earliest reading timestamp, recommended polling interval.</p>
-            <pre><code>{
-  "historyMode": "d1",
-  "earliestKnownAt": "2026-04-03T02:47:58.394637+00:00",
-  "polling": { "recommendedIntervalMs": 3000 }
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/timeline</h2>
-            </div>
-            <p>Annotated events, story milestones, and safety guidance for timeline browsing.</p>
-            <pre><code>{
-  "annotations": [
-    { "title": "USB bridge online", "subtitle": "..." }
-  ],
-  "events": [ { "title": "...", "date": "...", "body": "..." } ],
-  "safetyNote": "Do not use this dataset to rationalize cruelty."
-}</code></pre>
-          </article>
-        </div>
+      <section class="docs-section-head">
+        <p class="eyebrow">What you can build</p>
+        <h2><span class="gradient-text">From dashboards to entropy art</span></h2>
+        <p class="lede">Four real projects worth shipping with this signal.</p>
       </section>
 
-      <section>
-        <div class="panel-copy shell" style="margin-bottom: 1.5rem; margin-top: 2rem;">
-          <p class="eyebrow">Endpoints</p>
-          <h2><span class="gradient-text">Exports &amp; Derived Data</span></h2>
-        </div>
-
-        <div class="docs-grid shell">
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/snapshot</h2>
-            </div>
-            <p>Raw D1 snapshot rows. Best for full exports and audits. Params: <code>start</code>, <code>end</code>.</p>
-            <pre><code>{
-  "storage": "d1",
-  "sampleCount": 1440,
-  "points": [
-    { "sampledAt": "...", "numericValue": 0.38 }
-  ]
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/export</h2>
-            </div>
-            <p>Download as <code>csv</code> or <code>excel</code>. Returns attachment with Content-Disposition header.</p>
-            <pre><code>curl -L -o ghost-emf.csv \
-  "https://ghost.megabyte.space/api/v1/ghost-emf/export?format=csv"</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/google-sheets</h2>
-            </div>
-            <p>Returns an <code>IMPORTDATA()</code> formula and CSV URL for Google Sheets integration.</p>
-            <pre><code>{
-  "csvUrl": "https://ghost.megabyte.space/api/v1/ghost-emf/export?...&amp;format=csv",
-  "importDataFormula": "=IMPORTDATA(...)"
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/ghost-emf/random</h2>
-            </div>
-            <p>Reproducible number derived from stored snapshots. Params: <code>start</code>, <code>end</code>, <code>digits</code>.</p>
-            <pre><code>{
-  "randomNumber": "4729011842",
-  "randomUint32": 1914038592,
-  "sampleCount": 1440
-}</code></pre>
-            <p class="card-note">
-              Presented as an experiment — entropy derived from electromagnetic phenomena, not proof of paranormal mechanism.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section>
-        <div class="panel-copy shell" style="margin-bottom: 1.5rem; margin-top: 2rem;">
-          <p class="eyebrow">Endpoints</p>
-          <h2><span class="gradient-text">Transmissions &amp; Interaction</span></h2>
-        </div>
-
-        <div class="docs-grid shell">
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/transmissions/live</h2>
-            </div>
-            <p>
-              Live feed of hotline calls and chat messages. Supports incremental polling via <code>since</code> param.
-              Caller numbers are masked for privacy.
-            </p>
-            <pre><code>{
-  "entries": [
-    {
-      "type": "call",
-      "callSid": "CA...",
-      "caller": "***-***-6602",
-      "transcript": "...",
-      "aiResponse": "...",
-      "createdAt": "2026-04-23T22:00:00.000Z"
-    },
-    {
-      "type": "chat",
-      "sessionId": "...",
-      "role": "user",
-      "content": "...",
-      "createdAt": "2026-04-23T22:01:00.000Z"
-    }
-  ],
-  "total": 142,
-  "latestAt": "2026-04-23T22:01:00.000Z"
-}</code></pre>
-            <div class="endpoint-params">
-              <span class="endpoint-param"><code>since</code> — ISO timestamp for incremental polling</span>
-              <span class="endpoint-param"><code>limit</code> — max entries (default 30, max 50)</span>
-            </div>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/api/v1/transmission-count</h2>
-            </div>
-            <p>Total count of all transmissions (calls + chats) in the public record.</p>
-            <pre><code>{ "count": 142 }</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-post">POST</span>
-              <h2>/api/v1/chat</h2>
-            </div>
-            <p>
-              AI chat with the Ghost Signal persona. Everything submitted becomes part of the public record.
-              Uses Claude Sonnet for responses.
-            </p>
-            <pre><code>// Request
-{ "message": "Tell me about entropy.", "sessionId": "uuid" }
-
-// Response
-{
-  "response": "The signal speaks...",
-  "sessionId": "uuid"
-}</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-post">POST</span>
-              <h2>/api/v1/newsletter/subscribe</h2>
-            </div>
-            <p>Subscribe to The Signal Dispatch — weekly AI-summarized hotline submissions and campaign updates.</p>
-            <pre><code>// Request
-{ "email": "you@example.com" }
-
-// Response
-{ "ok": true }</code></pre>
-          </article>
-
-          <article class="panel endpoint-card">
-            <div class="endpoint-header">
-              <span class="endpoint-method endpoint-method-get">GET</span>
-              <h2>/health</h2>
-            </div>
-            <p>Health check. Returns status, version, and timestamp.</p>
-            <pre><code>{ "status": "ok", "version": "1.0.0", "timestamp": "..." }</code></pre>
-          </article>
-        </div>
-      </section>
+      <div class="docs-usecase-grid">
+        <article class="panel usecase-card">
+          <div class="usecase-icon" aria-hidden="true">📡</div>
+          <h3>Live EMF dashboard</h3>
+          <p>Poll <code>/api/v1/sensors</code> every 3s. Plot EMF/EF/RF on a single chart with downsampled history.</p>
+          <a class="usecase-link" href="/api/docs#tag/sensors">Sensor endpoints →</a>
+        </article>
+        <article class="panel usecase-card">
+          <div class="usecase-icon" aria-hidden="true">🎲</div>
+          <h3>Reproducible random</h3>
+          <p>Hash a window of EMF snapshots into a deterministic uint32. Use it for art, lotteries, or test fixtures.</p>
+          <a class="usecase-link" href="/api/docs#tag/exports">Random &amp; exports →</a>
+        </article>
+        <article class="panel usecase-card">
+          <div class="usecase-icon" aria-hidden="true">📊</div>
+          <h3>Google Sheets feed</h3>
+          <p>One <code>=IMPORTDATA()</code> cell pulls every reading. Auto-refreshes hourly. No code, no auth.</p>
+          <a class="usecase-link" href="#quickstart">See formula →</a>
+        </article>
+        <article class="panel usecase-card">
+          <div class="usecase-icon" aria-hidden="true">📞</div>
+          <h3>Live transmission feed</h3>
+          <p>Stream every hotline call and chat message into your app via <code>/api/v1/transmissions/live</code>.</p>
+          <a class="usecase-link" href="/api/docs#tag/transmissions">Transmissions →</a>
+        </article>
+      </div>
 
       <hr class="section-divider" aria-hidden="true" />
 
-      <section class="two-up shell">
+      <section class="docs-section-head" id="endpoint-categories">
+        <p class="eyebrow">Endpoint map</p>
+        <h2><span class="gradient-text">Three families, one OpenAPI spec</span></h2>
+        <p class="lede">Skim the surface here, then jump into the live reference for schemas and try-it-out.</p>
+      </section>
+
+      <div class="docs-family-grid">
+        <article class="panel family-card family-card-cyan">
+          <header>
+            <span class="family-tag">Sensor data</span>
+            <span class="family-count">6 endpoints</span>
+          </header>
+          <h3>EMF, EF, RF + entropy</h3>
+          <ul class="family-paths">
+            <li><span class="m m-get">GET</span><code>/api/v1/sensors</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/current</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/history</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/entropy</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/meta</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/timeline</code></li>
+          </ul>
+          <a class="family-cta" href="/api/docs#tag/sensors">Open in reference →</a>
+        </article>
+
+        <article class="panel family-card family-card-violet">
+          <header>
+            <span class="family-tag">Exports &amp; derived</span>
+            <span class="family-count">4 endpoints</span>
+          </header>
+          <h3>Snapshots, CSV, random</h3>
+          <ul class="family-paths">
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/snapshot</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/export</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/google-sheets</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/ghost-emf/random</code></li>
+          </ul>
+          <a class="family-cta" href="/api/docs#tag/exports">Open in reference →</a>
+        </article>
+
+        <article class="panel family-card family-card-red">
+          <header>
+            <span class="family-tag">Transmissions &amp; chat</span>
+            <span class="family-count">5 endpoints</span>
+          </header>
+          <h3>Live feed, chat, newsletter</h3>
+          <ul class="family-paths">
+            <li><span class="m m-get">GET</span><code>/api/v1/transmissions/live</code></li>
+            <li><span class="m m-get">GET</span><code>/api/v1/transmission-count</code></li>
+            <li><span class="m m-post">POST</span><code>/api/v1/chat</code></li>
+            <li><span class="m m-post">POST</span><code>/api/v1/newsletter/subscribe</code></li>
+            <li><span class="m m-get">GET</span><code>/health</code></li>
+          </ul>
+          <a class="family-cta" href="/api/docs#tag/transmissions">Open in reference →</a>
+        </article>
+      </div>
+
+      <hr class="section-divider" aria-hidden="true" />
+
+      <section class="two-up">
         <article class="panel">
           <p class="eyebrow">Caching</p>
           <h2>Cloudflare in front of Home Assistant</h2>
-          <p>
-            Edge-cached at Cloudflare to protect the upstream sensor. Cache behavior varies by data center.
-          </p>
+          <p>Edge-cached at Cloudflare to protect the upstream sensor. Cache behavior varies by data center.</p>
           <ul class="signal-list">
             <li>Current/sensors: short TTL for near-live polling</li>
             <li>History/entropy: longer TTL for charts and derived data</li>
@@ -388,11 +242,9 @@
         </article>
 
         <article class="panel">
-          <p class="eyebrow">Rate limits</p>
+          <p class="eyebrow">Rate limits &amp; tracing</p>
           <h2>Public, but not abusable</h2>
-          <p>
-            Read-only and rate-limited per IP via KV counters. Every response includes tracing headers.
-          </p>
+          <p>Read-only and rate-limited per IP via KV counters. Every response carries tracing headers.</p>
           <ul class="signal-list">
             <li><code>X-Request-ID</code> — unique request identifier</li>
             <li><code>X-RateLimit-Limit</code> — total budget per window</li>
@@ -405,52 +257,61 @@
 
       <hr class="section-divider" aria-hidden="true" />
 
-      <section class="panel shell">
+      <section class="panel" id="quickstart">
         <p class="eyebrow">Quickstart</p>
         <h2><span class="gradient-text">Start polling in seconds</span></h2>
         <div class="docs-examples">
           <div class="docs-example">
             <span class="docs-example-label">curl</span>
-            <pre><code>curl https://ghost.megabyte.space/api/v1/sensors</code></pre>
+            <pre><code><span class="tok-fn">curl</span> <span class="tok-str">https://ghost.megabyte.space/api/v1/sensors</span></code></pre>
           </div>
           <div class="docs-example">
             <span class="docs-example-label">JavaScript</span>
-            <pre><code>const sensors = await fetch(
-  "https://ghost.megabyte.space/api/v1/sensors"
-).then(r =&gt; r.json())
+            <pre><code><span class="tok-key">const</span> sensors <span class="tok-op">=</span> <span class="tok-key">await</span> <span class="tok-fn">fetch</span>(
+  <span class="tok-str">"https://ghost.megabyte.space/api/v1/sensors"</span>
+).<span class="tok-fn">then</span>(r <span class="tok-op">=&gt;</span> r.<span class="tok-fn">json</span>())
 
-console.log(sensors.emf.numericValue) // 0.8 mG
-console.log(sensors.ef.numericValue)  // 2.1 V/m
-console.log(sensors.rf.numericValue)  // 0.003 mW/m²</code></pre>
+<span class="tok-cls">console</span>.<span class="tok-fn">log</span>(sensors.emf.numericValue) <span class="tok-com">// 0.8 mG</span>
+<span class="tok-cls">console</span>.<span class="tok-fn">log</span>(sensors.ef.numericValue)  <span class="tok-com">// 2.1 V/m</span>
+<span class="tok-cls">console</span>.<span class="tok-fn">log</span>(sensors.rf.numericValue)  <span class="tok-com">// 0.003 mW/m²</span></code></pre>
           </div>
           <div class="docs-example">
             <span class="docs-example-label">Python</span>
-            <pre><code>import requests
+            <pre><code><span class="tok-key">import</span> <span class="tok-cls">requests</span>
 
-sensors = requests.get(
-    "https://ghost.megabyte.space/api/v1/sensors",
-    timeout=10,
-).json()
+sensors <span class="tok-op">=</span> <span class="tok-cls">requests</span>.<span class="tok-fn">get</span>(
+    <span class="tok-str">"https://ghost.megabyte.space/api/v1/sensors"</span>,
+    timeout<span class="tok-op">=</span><span class="tok-num">10</span>,
+).<span class="tok-fn">json</span>()
 
-print(f"EMF: {sensors['emf']['numericValue']} mG")</code></pre>
+<span class="tok-fn">print</span>(<span class="tok-str">f"EMF: {sensors['emf']['numericValue']} mG"</span>)</code></pre>
           </div>
           <div class="docs-example">
             <span class="docs-example-label">Google Sheets</span>
-            <pre><code>=IMPORTDATA("https://ghost.megabyte.space/api/v1/ghost-emf/export?format=csv")</code></pre>
+            <pre><code><span class="tok-op">=</span><span class="tok-fn">IMPORTDATA</span>(<span class="tok-str">"https://ghost.megabyte.space/api/v1/ghost-emf/export<span class="tok-pct">?format=csv</span>"</span>)</code></pre>
           </div>
           <div class="docs-example">
             <span class="docs-example-label">Polling (5s interval)</span>
-            <pre><code>let latest = null
+            <pre><code><span class="tok-key">let</span> latest <span class="tok-op">=</span> <span class="tok-bool">null</span>
 
-setInterval(async () =&gt; {
-  const params = latest ? `?since=${latest}` : ""
-  const res = await fetch(`/api/v1/transmissions/live${params}`)
-  const data = await res.json()
-  if (data.latestAt) latest = data.latestAt
-  data.entries.forEach(e =&gt; console.log(e.type, e.content || e.transcript))
-}, 5000)</code></pre>
+<span class="tok-fn">setInterval</span>(<span class="tok-key">async</span> () <span class="tok-op">=&gt;</span> {
+  <span class="tok-key">const</span> params <span class="tok-op">=</span> latest <span class="tok-op">?</span> <span class="tok-str">`?since=${latest}`</span> <span class="tok-op">:</span> <span class="tok-str">""</span>
+  <span class="tok-key">const</span> res <span class="tok-op">=</span> <span class="tok-key">await</span> <span class="tok-fn">fetch</span>(<span class="tok-str">`/api/v1/transmissions/live${params}`</span>)
+  <span class="tok-key">const</span> data <span class="tok-op">=</span> <span class="tok-key">await</span> res.<span class="tok-fn">json</span>()
+  <span class="tok-key">if</span> (data.latestAt) latest <span class="tok-op">=</span> data.latestAt
+  data.entries.<span class="tok-fn">forEach</span>(e <span class="tok-op">=&gt;</span> <span class="tok-cls">console</span>.<span class="tok-fn">log</span>(e.type, e.content <span class="tok-op">||</span> e.transcript))
+}, <span class="tok-num">5000</span>)</code></pre>
           </div>
         </div>
+      </section>
+
+      <section class="docs-cta panel">
+        <div>
+          <p class="eyebrow">Ready to ship</p>
+          <h2><span class="gradient-text">Open the live reference</span></h2>
+          <p>Schemas, parameters, response examples, and one-click try-it-out for every endpoint.</p>
+        </div>
+        <a class="button button-primary" href="/api/docs">Open Interactive Reference →</a>
       </section>
     </main>
 
@@ -473,6 +334,6 @@ setInterval(async () =&gt; {
       </p>
     </footer>
 
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="/app.js?v=20260501-reveal"></script>
   </body>
 </html>

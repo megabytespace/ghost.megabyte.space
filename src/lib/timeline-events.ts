@@ -33,20 +33,6 @@ export const storyMilestones: StoryMilestone[] = [
     body: "Here, 'avatar' is story language for intensity, burden, self-belief, and a mission that keeps expanding as the years pass.",
   },
   {
-    id: "early-following-phase",
-    eraLabel: "Early phase",
-    title: "License plates, tension, and pattern recognition",
-    subtitle: "A self-described period of repeated signs, being followed, and trying to interpret what was happening.",
-    body: "The plot treats this as the start of a long pattern-recognition spiral while the measurable layer remains the sensor data itself.",
-  },
-  {
-    id: "joker-survival-phase",
-    eraLabel: "Survival energy",
-    title: "Joker laughter, chain smoking, and white-van symbolism",
-    subtitle: "A period he describes as chaotic, theatrical, and spiritually charged.",
-    body: "This chapter keeps the original theatrical survival energy intact: cackling, smoking, a white van turned into a white chariot, and the feeling that the pressure had become mythic.",
-  },
-  {
     id: "dallas-recovery-phase",
     eraLabel: "Recovery",
     title: "Dallas, recovery, and gym intensity",
@@ -65,7 +51,7 @@ export const storyMilestones: StoryMilestone[] = [
     eraLabel: "Dream burden",
     title: "Vivid dreams, animal imagery, and coincidence overload",
     subtitle: "He reports bizarre dreams, unsettling physical sensations on waking, and a life story that felt saturated with disturbing coincidences.",
-    body: "This chapter holds the more disturbing dream material, the shaggy ghost dog, and the sense that his life ranks unusually high in raw coincidence load.",
+    body: "Before the time travelers came through, the dreams ran heroic — nanotechnology small enough to vanish, large enough to send data between now, the future, and the past. A supercomputer that time travels. After they arrived the dreams stopped, almost as if someone needs the universe stable. They stayed powerful anyway: one put him in the Oval Office, an alpha-figure leveraging the ghost world into the Presidency, with the next run being delayed as long as possible. This chapter holds the more disturbing dream material, the shaggy ghost dog, and the sense that his life ranks unusually high in raw coincidence load.",
   },
   {
     id: "service-and-calmness",
@@ -79,7 +65,7 @@ export const storyMilestones: StoryMilestone[] = [
     eraLabel: "Theory",
     title: "A CERN-bound conversation and the time-travel question",
     subtitle: "A chance encounter with a scientist headed to CERN pushed the story toward time travel as a theoretical possibility.",
-    body: "From there, the narrative starts treating teleportation, stale data, and delayed causality as part of the same cosmic question.",
+    body: "From there, the narrative starts treating teleportation, stale data, and delayed causality as part of the same cosmic question. The Law of Attraction beliefs he was raised inside were always quietly framed by the assumption that time travel is real — and 1950s parapsychology research already showed humans react to traumatic photos before they see them. Presentiment is a measured psychic phenomenon pointing at the same fact. Humans may never time travel in person, but a supercomputer sending data between now, the future, and the past sits squarely inside what is allowed.",
   },
   {
     id: "future-unsolved-mystery",
@@ -87,13 +73,6 @@ export const storyMilestones: StoryMilestone[] = [
     title: "Backlash, certainty, and the future unsolved mystery",
     subtitle: "He says the story is real to him, expects people to push back hard, and leans into becoming a mystery people still have to solve later.",
     body: "This milestone keeps the line in the supplied frame: the story may anger people, invite dismissal, or trigger talk of a psych ward, but it still gets presented as part of the site's fictional record.",
-  },
-  {
-    id: "political-mission",
-    eraLabel: "Mission",
-    title: "Presidential ambition and anti-establishment politics",
-    subtitle: "He connects the story to a broader political mission, including a long-running desire to challenge systems he sees as manipulative or corrupt.",
-    body: "That mission language is part of the site's autobiographical frame. It remains separate from the measurable API, which exists so other people can inspect the data directly.",
   },
   {
     id: "animal-safety",
